@@ -4,7 +4,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Dotti">
+    tools:context="fr.bouyguestelecom.tv.bboxiotsample.BboxIoTActivity">
 
     <!-- As the main content view, the view below consumes the entire
          space available using match_parent in both dimensions. -->
@@ -15,24 +15,130 @@
         android:layout_marginLeft="5dp">
 
         <TextView
+            android:id="@+id/bluetooth_state_txt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Bluetooth state"
-            android:id="@+id/bluetooth_state_txt"
-            android:layout_marginTop="5dp"/>
+            android:layout_marginTop="5dp"
+            android:text="Bluetooth state API" />
+
         <Button
+            android:id="@+id/bluetooth_state_on"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/bluetooth_state_txt"
-            android:id="@+id/bluetooth_state_on"
-            android:text="ON"/>
+            android:text="ON" />
+
         <Button
+            android:id="@+id/bluetooth_state_off"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/bluetooth_state_off"
             android:layout_below="@+id/bluetooth_state_txt"
             android:layout_toRightOf="@+id/bluetooth_state_on"
-            android:text="OFF"/>
+            android:text="OFF" />
+
+        <TextView
+            android:id="@+id/bluetooth_scan_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bluetooth_state_off"
+            android:layout_marginTop="5dp"
+            android:text="Bluetooth scan API" />
+
+        <Button
+            android:id="@+id/bluetooth_continuous_scanning_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bluetooth_scan_txt"
+            android:text="start continuous scan" />
+
+        <Button
+            android:id="@+id/bluetooth_scan_stop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bluetooth_scan_txt"
+            android:layout_toRightOf="@+id/bluetooth_continuous_scanning_start"
+            android:text="stop scan" />
+
+        <Button
+            android:id="@+id/bluetooth_clear_scan_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bluetooth_scan_txt"
+            android:layout_toRightOf="@+id/bluetooth_scan_stop"
+            android:text="clear scan list" />
+
+        <Button
+            android:id="@+id/bluetooth_permanent_scanning_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bluetooth_continuous_scanning_start"
+            android:text="start permanent scan" />
+
+        <Button
+            android:id="@+id/bluetooth_periodic_scanning_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bluetooth_continuous_scanning_start"
+            android:layout_toRightOf="@+id/bluetooth_permanent_scanning_start"
+            android:text="start periodic scan" />
+
+        <LinearLayout
+            android:id="@+id/bluetooth_list_title"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bluetooth_periodic_scanning_start"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/scanning_list_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/bluetooth_clear_scan_list"
+                android:layout_weight="0.5"
+                android:text="scanning list"
+                android:textStyle="bold"></TextView>
+
+            <TextView
+                android:id="@+id/connection_list_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/bluetooth_clear_scan_list"
+                android:layout_weight="0.5"
+                android:text="connection list"
+                android:textStyle="bold"></TextView>
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/division_bar1"
+            android:layout_width="fill_parent"
+            android:layout_height="2dp"
+            android:layout_below="@+id/bluetooth_list_title"
+            android:layout_marginBottom="5dp"
+            android:layout_marginTop="5dp"
+            android:background="#FFFFFF" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_below="@+id/division_bar1"
+            android:orientation="horizontal">
+
+            <ListView
+                android:id="@+id/scanning_list_view"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/division_bar1"
+                android:layout_weight="0.5"></ListView>
+
+            <ListView
+                android:id="@+id/connection_list_view"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/division_bar1"
+                android:layout_weight="0.5"></ListView>
+
+        </LinearLayout>
 
     </RelativeLayout>
 
