@@ -5,25 +5,26 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import fr.bmartel.android.dotti.R;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtConnection;
 
 /**
  * @author Bertrand Martel
  */
-public class StableArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
+public class ConnectionItemArrayAdapter extends ArrayAdapter<BtConnection> {
 
-    List<BluetoothSmartDevice> btDeviceList = new ArrayList<>();
+    List<BtConnection> btDeviceList = new ArrayList<>();
 
     private static LayoutInflater inflater = null;
 
-    public StableArrayAdapter(Context context, int textViewResourceId,
-                              List<BluetoothSmartDevice> objects) {
+    public ConnectionItemArrayAdapter(Context context, int textViewResourceId,
+                                      List<BtConnection> objects) {
         super(context, textViewResourceId, objects);
 
         this.btDeviceList = objects;
@@ -36,12 +37,13 @@ public class StableArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
         final ViewHolder holder;
         try {
             if (convertView == null) {
-                vi = inflater.inflate(R.layout.listview_item, null);
+                vi = inflater.inflate(R.layout.listview_connection_item, null);
                 holder = new ViewHolder();
 
                 holder.deviceUid = (TextView) vi.findViewById(R.id.text1);
                 holder.manufacturerName = (TextView) vi.findViewById(R.id.text2);
                 holder.productName = (TextView) vi.findViewById(R.id.text3);
+                holder.connectionStatus = (ImageView) vi.findViewById(R.id.connection_state);
 
                 vi.setTag(holder);
             } else {
@@ -49,14 +51,23 @@ public class StableArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
             }
 
             holder.deviceUid.setText(btDeviceList.get(position).getDeviceUuid());
-            holder.manufacturerName.setText(btDeviceList.get(position).getGenericDevice().getManufacturerName());
-            holder.productName.setText(btDeviceList.get(position).getGenericDevice().getProductName());
+            holder.manufacturerName.setText(btDeviceList.get(position).getBluetoothDevice().getGenericDevice().getManufacturerName());
+            holder.productName.setText(btDeviceList.get(position).getBluetoothDevice().getGenericDevice().getProductName());
+
+            if (btDeviceList.get(position).isConnected()) {
+                holder.connectionStatus.setImageResource(R.drawable.green_circle);
+            } else {
+                holder.connectionStatus.setImageResource(R.drawable.red_circle);
+            }
 
         } catch (Exception e) {
-
-
+            e.printStackTrace();
         }
         return vi;
+    }
+
+    public List<BtConnection> getConnectionList() {
+        return btDeviceList;
     }
 
     @Override
@@ -78,6 +89,7 @@ public class StableArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
         public TextView deviceUid;
         public TextView manufacturerName;
         public TextView productName;
+        public ImageView connectionStatus;
     }
 
 }

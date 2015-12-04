@@ -1,13 +1,8 @@
-<!-- A DrawerLayout is intended to be used as the top-level content view using match_parent for both width and height to consume the full space available. -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="fr.bouyguestelecom.tv.bboxiotsample.BboxIoTActivity">
+    android:layout_height="match_parent">
 
-    <!-- As the main content view, the view below consumes the entire
-         space available using match_parent in both dimensions. -->
     <RelativeLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
@@ -68,6 +63,14 @@
             android:text="clear scan list" />
 
         <Button
+            android:id="@+id/bluetooth_disassociate_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/bluetooth_scan_txt"
+            android:layout_toRightOf="@+id/bluetooth_clear_scan_list"
+            android:text="disassociate all" />
+
+        <Button
             android:id="@+id/bluetooth_permanent_scanning_start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -81,6 +84,14 @@
             android:layout_below="@+id/bluetooth_continuous_scanning_start"
             android:layout_toRightOf="@+id/bluetooth_permanent_scanning_start"
             android:text="start periodic scan" />
+
+        <ListView
+            android:id="@+id/connection_event_list_view"
+            android:layout_width="350dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="5dp" />
 
         <LinearLayout
             android:id="@+id/bluetooth_list_title"
@@ -104,7 +115,7 @@
                 android:layout_height="wrap_content"
                 android:layout_toStartOf="@+id/bluetooth_clear_scan_list"
                 android:layout_weight="0.5"
-                android:text="connection list"
+                android:text="association list"
                 android:textStyle="bold"></TextView>
 
         </LinearLayout>
@@ -120,7 +131,7 @@
 
         <LinearLayout
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_height="wrap_content"
             android:layout_below="@+id/division_bar1"
             android:orientation="horizontal">
 

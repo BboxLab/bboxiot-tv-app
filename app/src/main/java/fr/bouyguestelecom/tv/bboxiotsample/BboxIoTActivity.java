@@ -36,6 +36,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -53,15 +54,17 @@ import fr.bmartel.android.dotti.R;
 import fr.bouyguestelecom.tv.bboxiot.IBboxIotService;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.IBluetoothEventListener;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtConnection;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionStatus;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.EventBuilder;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.IGenericEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.IotEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.enums.EventRegistration;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.enums.ScanningAction;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.AssociationEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.BluetoothStateEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanItemEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanStatusChangeEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.inter.IScanListItemEvent;
 
 /**
  * Dotti device management main activity
@@ -89,13 +92,28 @@ public class BboxIoTActivity extends Activity {
 
     private Button btScanStop = null;
 
+    private Button btDisassociateAll = null;
+
     private Button btClearScanList = null;
 
-    private ListView listview = null;
+    private ListView scanningListview = null;
 
-    private StableArrayAdapter scanningListAdapter = null;
+    private ListView associationListview = null;
+
+    private ListView connectionEventListView = null;
+
+    private AssociationEventAdapter connectionEventListAdapter = null;
+
+    private ScanItemArrayAdapter scanningListAdapter = null;
+
+    private ConnectionItemArrayAdapter associationListAdapter = null;
 
     private Map<String, BluetoothSmartDevice> scanningList = new HashMap<>();
+
+    private Map<String, BtConnection> associationList = new HashMap<>();
+
+    private Dialog currentDialog = null;
+    private String currentDeviceUid = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,7 +134,31 @@ public class BboxIoTActivity extends Activity {
         btClearScanList = (Button) findViewById(R.id.bluetooth_clear_scan_list);
         btScanPermanent = (Button) findViewById(R.id.bluetooth_permanent_scanning_start);
         btScanPeriodic = (Button) findViewById(R.id.bluetooth_periodic_scanning_start);
-        
+
+        btDisassociateAll = (Button) findViewById(R.id.bluetooth_disassociate_all);
+
+        btDisassociateAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (bboxIotService != null) {
+
+                    try {
+                        boolean status = bboxIotService.getBluetoothManager().disassociateAll();
+
+                        if (status) {
+                            Log.i(TAG, "Disassociate all request success");
+                            refreshAssociationList();
+                        } else {
+                            Log.i(TAG, "Disassociate all request failure");
+                        }
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
         btClearScanList.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -297,6 +339,8 @@ public class BboxIoTActivity extends Activity {
         btStateOffBtn.setEnabled(false);
 
         initializeScanningList();
+        initializeAssociationList();
+        initializeConnectionEventList();
 
         ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -310,25 +354,9 @@ public class BboxIoTActivity extends Activity {
 
                 try {
 
-                    IScanListItemEvent event = IotEvent.parseScanningList(bboxIotService.getBluetoothManager().getScanningList());
-                    scanningList = event.getList();
+                    refreshScanningList();
 
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            if (scanningListAdapter != null) {
-
-                                Iterator it = scanningList.entrySet().iterator();
-
-                                while (it.hasNext()) {
-                                    Map.Entry<String, BluetoothSmartDevice> pair = (Map.Entry) it.next();
-                                    scanningListAdapter.add(pair.getValue());
-                                }
-                                scanningListAdapter.notifyDataSetChanged();
-                            }
-                        }
-                    });
+                    refreshAssociationList();
 
                 } catch (RemoteException e) {
                     e.printStackTrace();
@@ -342,13 +370,17 @@ public class BboxIoTActivity extends Activity {
                     }
 
                     if (bboxIotService.getBluetoothManager().getBluetoothState()) {
+
                         btStateOnBtn.setEnabled(false);
                         btStateOffBtn.setEnabled(true);
                         btStateOffBtn.requestFocus();
+
                     } else {
+
                         btStateOnBtn.setEnabled(true);
                         btStateOffBtn.setEnabled(false);
                         btStateOnBtn.requestFocus();
+
                     }
 
                     if (bboxIotService.getBluetoothManager().isScanning()) {
@@ -375,6 +407,7 @@ public class BboxIoTActivity extends Activity {
                     Set<EventRegistration> registrationSet = new HashSet<>();
                     registrationSet.add(EventRegistration.REGISTRATION_BLUETOOTH_STATE);
                     registrationSet.add(EventRegistration.REGISTRATION_SCANNING);
+                    registrationSet.add(EventRegistration.REGISTRATION_CONNECTION);
 
                     bboxIotService.getBluetoothManager().registerEvents(EventBuilder.buildRegistration(registrationSet).toJsonString(), new IBluetoothEventListener.Stub() {
 
@@ -429,6 +462,8 @@ public class BboxIoTActivity extends Activity {
                                             @Override
                                             public void run() {
                                                 btScanContinuous.setEnabled(false);
+                                                btScanPermanent.setEnabled(false);
+                                                btScanPeriodic.setEnabled(false);
                                                 btScanStop.setEnabled(true);
                                             }
                                         });
@@ -441,6 +476,8 @@ public class BboxIoTActivity extends Activity {
                                             public void run() {
 
                                                 btScanContinuous.setEnabled(true);
+                                                btScanPermanent.setEnabled(true);
+                                                btScanPeriodic.setEnabled(true);
                                                 btScanStop.setEnabled(false);
                                             }
                                         });
@@ -464,13 +501,121 @@ public class BboxIoTActivity extends Activity {
                                             }
                                         }
                                     });
+                                } else if (genericEvent instanceof AssociationEvent) {
+
+                                    final AssociationEvent btEvent = (AssociationEvent) genericEvent;
+
+                                    System.out.println("received association event : " + btEvent.getState().toString());
+
+                                    if (connectionEventListAdapter != null) {
+
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+
+                                                if (connectionEventListAdapter.getCount() > 10) {
+
+                                                    for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                        connectionEventListAdapter.getDeviceList().remove(i);
+                                                    }
+                                                }
+                                                connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getConnection().getDeviceUuid(), btEvent.getState().toString()), 0);
+                                                connectionEventListAdapter.notifyDataSetChanged();
+
+                                            }
+                                        });
+                                    }
+
+                                    try {
+                                        switch (btEvent.getState()) {
+
+                                            case ASSOCIATION_COMPLETE: {
+
+                                                if (btEvent.getConnection().getDeviceUuid().equals(currentDeviceUid) && currentDialog != null) {
+                                                    currentDialog.dismiss();
+                                                    currentDialog = null;
+                                                }
+
+                                                refreshAssociationList();
+                                                //refresh scanning list because device entry is no longer present
+                                                refreshScanningList();
+
+                                                break;
+                                            }
+                                            case CONNECTED: {
+
+                                                refreshAssociationList();
+
+                                                if (currentDeviceUid.equals(btEvent.getConnection().getDeviceUuid()) && currentDialog != null) {
+
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+
+                                                            System.out.println("modif1");
+                                                            ImageView view = (ImageView) currentDialog.findViewById(R.id.device_connected_value);
+                                                            if (view != null)
+                                                                view.setImageResource(R.drawable.green_circle);
+
+                                                            TextView buttonConnect = (TextView) currentDialog.findViewById(R.id.button_connect);
+                                                            if (buttonConnect != null)
+                                                                buttonConnect.setEnabled(false);
+
+                                                            TextView buttonDisconnect = (TextView) currentDialog.findViewById(R.id.button_disconnect);
+                                                            if (buttonDisconnect != null)
+                                                                buttonDisconnect.setEnabled(true);
+                                                        }
+                                                    });
+
+                                                }
+                                                break;
+                                            }
+                                            case DISCONNECTED: {
+
+                                                refreshAssociationList();
+
+                                                if (currentDeviceUid.equals(btEvent.getConnection().getDeviceUuid()) && currentDialog != null) {
+
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            System.out.println("modif2");
+                                                            ImageView view = (ImageView) currentDialog.findViewById(R.id.device_connected_value);
+                                                            if (view != null)
+                                                                view.setImageResource(R.drawable.red_circle);
+
+                                                            TextView buttonConnect = (TextView) currentDialog.findViewById(R.id.button_connect);
+                                                            if (buttonConnect != null)
+                                                                buttonConnect.setEnabled(true);
+
+                                                            TextView buttonDisconnect = (TextView) currentDialog.findViewById(R.id.button_disconnect);
+                                                            if (buttonDisconnect != null)
+                                                                buttonDisconnect.setEnabled(false);
+                                                        }
+                                                    });
+                                                }
+
+                                                break;
+                                            }
+                                            case CONNECTION_ERROR: {
+
+                                                break;
+                                            }
+                                        }
+                                    } catch (RemoteException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
 
                             }
                         }
 
                     });
-                } catch (RemoteException e) {
+                } catch (
+                        RemoteException e
+                        )
+
+                {
                     e.printStackTrace();
                 }
             }
@@ -489,21 +634,269 @@ public class BboxIoTActivity extends Activity {
 
     }
 
-    private void initializeScanningList() {
+    private void refreshAssociationList() throws RemoteException {
 
-        listview = (ListView) findViewById(R.id.scanning_list_view);
+        Log.i(TAG, "refresh association list");
 
-        scanningListAdapter = new StableArrayAdapter(this,
-                android.R.layout.simple_list_item_1, new ArrayList<BluetoothSmartDevice>());
+        associationList = IotEvent.parseAssociationList(bboxIotService.getBluetoothManager().getAssociationList());
 
-        listview.setAdapter(scanningListAdapter);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
 
-        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                if (associationListAdapter != null) {
+
+                    associationListAdapter.clear();
+
+                    Iterator it = associationList.entrySet().iterator();
+
+                    while (it.hasNext()) {
+                        Map.Entry<String, BtConnection> pair = (Map.Entry) it.next();
+                        associationListAdapter.add(pair.getValue());
+                    }
+                    associationListAdapter.notifyDataSetChanged();
+                }
+            }
+        });
+    }
+
+    private void refreshScanningList() throws RemoteException {
+
+        scanningList = IotEvent.parseScanningList(bboxIotService.getBluetoothManager().getScanningList());
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                if (scanningListAdapter != null) {
+
+                    scanningListAdapter.clear();
+
+                    Iterator it = scanningList.entrySet().iterator();
+
+                    while (it.hasNext()) {
+                        Map.Entry<String, BluetoothSmartDevice> pair = (Map.Entry) it.next();
+                        scanningListAdapter.add(pair.getValue());
+                    }
+                    scanningListAdapter.notifyDataSetChanged();
+                }
+            }
+        });
+    }
+
+    private void initializeAssociationList() {
+
+        associationListview = (ListView) findViewById(R.id.connection_list_view);
+
+        associationListAdapter = new ConnectionItemArrayAdapter(this,
+                android.R.layout.simple_list_item_1, new ArrayList<BtConnection>());
+
+        associationListview.setAdapter(associationListAdapter);
+
+        associationListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
-                System.out.println("before");
+
+                final BtConnection item = (BtConnection) parent.getItemAtPosition(position);
+
+
+                final Dialog dialog = new Dialog(BboxIoTActivity.this);
+
+                currentDialog = dialog;
+                currentDeviceUid = item.getDeviceUuid();
+
+                dialog.setContentView(R.layout.connection_item);
+                dialog.setTitle("Device " + item.getDeviceUuid());
+
+                Button buttonBack = (Button) dialog.findViewById(R.id.button_back);
+                Button buttonConnect = (Button) dialog.findViewById(R.id.button_connect);
+                Button buttonDisconnect = (Button) dialog.findViewById(R.id.button_disconnect);
+                Button buttonDisassociate = (Button) dialog.findViewById(R.id.button_disassociate);
+
+                TextView productName = (TextView) dialog.findViewById(R.id.product_name_value);
+                TextView manufacturerName = (TextView) dialog.findViewById(R.id.manufacturer_name_value);
+
+                productName.setText(item.getBluetoothDevice().getGenericDevice().getProductName());
+                manufacturerName.setText(item.getBluetoothDevice().getGenericDevice().getManufacturerName());
+
+                ImageView connectedValue = (ImageView) dialog.findViewById(R.id.device_connected_value);
+
+                TextView firstConnection = (TextView) dialog.findViewById(R.id.device_is_first_connected_value);
+                firstConnection.setText("" + item.isFirstTimeConnected());
+
+                TextView busy = (TextView) dialog.findViewById(R.id.device_is_busy_value);
+                busy.setText("" + item.isBusy());
+
+                TextView deviceUidVal = (TextView) dialog.findViewById(R.id.device_uid_value);
+                deviceUidVal.setText(item.getDeviceUuid());
+
+                TextView deviceNameList = (TextView) dialog.findViewById(R.id.device_name_list_value);
+
+                TextView deviceUp = (TextView) dialog.findViewById(R.id.device_up_value);
+                deviceUp.setText("" + item.getBluetoothDevice().isUp());
+
+                TextView manufacturerDataFilter = (TextView) dialog.findViewById(R.id.manufacturer_data_filter_value);
+
+                String manufacturerDataFilterVals = "[";
+                for (int i = 0; i < item.getBluetoothDevice().getManufacturerData().length; i++) {
+                    manufacturerDataFilterVals += item.getBluetoothDevice().getManufacturerData()[i] + " , ";
+                }
+                if (!manufacturerDataFilterVals.equals("[")) {
+                    manufacturerDataFilterVals = manufacturerDataFilterVals.substring(0, manufacturerDataFilterVals.length() - 3) +
+                            " ]";
+                    manufacturerDataFilter.setText(manufacturerDataFilterVals);
+                } else {
+                    manufacturerDataFilter.setText("[ ]");
+                }
+
+                TextView lastActivityDate = (TextView) dialog.findViewById(R.id.last_activity_date_value);
+                Date lastDate = new Date(item.getBluetoothDevice().getLastActivityTime());
+                DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                lastActivityDate.setText(df.format(lastDate).toString());
+
+                TextView deviceMode = (TextView) dialog.findViewById(R.id.device_mode_value);
+                deviceMode.setText(item.getBluetoothDevice().getDeviceMode());
+
+                TextView deviceAddress = (TextView) dialog.findViewById(R.id.device_address_value);
+                deviceAddress.setText(item.getBluetoothDevice().getDeviceAddress());
+
+                String deviceNames = "";
+                for (int i = 0; i < item.getBluetoothDevice().getDeviceNameList().size(); i++) {
+                    deviceNames += "\"" + item.getBluetoothDevice().getDeviceNameList().get(i) + "\"" + ",";
+                }
+                if (!deviceNames.equals("")) {
+                    deviceNameList.setText(deviceNames.substring(0, deviceNames.length() - 1));
+                }
+
+                if (item.isConnected()) {
+                    connectedValue.setImageResource(R.drawable.green_circle);
+                    buttonConnect.setEnabled(false);
+                    buttonDisconnect.setEnabled(true);
+                } else {
+                    connectedValue.setImageResource(R.drawable.red_circle);
+                    buttonConnect.setEnabled(true);
+                    buttonDisconnect.setEnabled(false);
+                }
+
+                buttonBack.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.dismiss();
+                    }
+                });
+
+                buttonDisassociate.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Log.i(TAG, "disassociating device " + item.getDeviceUuid());
+
+                        if (bboxIotService != null) {
+                            try {
+                                boolean status = bboxIotService.getBluetoothManager().disassociateDevice(item.getDeviceUuid());
+
+                                if (status) {
+                                    Log.i(TAG, "Disassociate request successfully initiated");
+                                    refreshAssociationList();
+                                    dialog.dismiss();
+                                } else
+                                    Log.i(TAG, "Disassociate request failure");
+
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+
+                buttonConnect.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Log.i(TAG, "connecting device " + item.getDeviceUuid());
+
+                        if (bboxIotService != null) {
+                            try {
+                                int status = bboxIotService.getBluetoothManager().connect(item.getDeviceUuid(), 2, true);
+
+                                switch (ConnectionStatus.getStatus(status)) {
+                                    case CONNECTION_SUCCESS: {
+                                        Log.i(TAG, "Connection initiated");
+                                        break;
+                                    }
+                                    case CONNECTION_FAILURE: {
+                                        Log.i(TAG, "Connection failure");
+                                        break;
+                                    }
+                                    case CONNECTION_WAITING: {
+                                        Log.i(TAG, "Connection waiting");
+                                        break;
+                                    }
+                                }
+
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+
+                buttonDisconnect.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Log.i(TAG, "disconnecting device " + item.getDeviceUuid());
+
+                        if (bboxIotService != null) {
+
+                            try {
+
+                                boolean status = bboxIotService.getBluetoothManager().disconnect(item.getDeviceUuid());
+
+                                if (status)
+                                    Log.i(TAG, "Disconnection successfully initiated");
+                                else
+                                    Log.i(TAG, "Disconnection request failure");
+
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+
+                dialog.show();
+            }
+
+        });
+    }
+
+    private void initializeConnectionEventList() {
+
+        connectionEventListView = (ListView) findViewById(R.id.connection_event_list_view);
+
+        connectionEventListAdapter = new AssociationEventAdapter(this,
+                android.R.layout.simple_list_item_1, new ArrayList<AssociationEventObj>());
+
+        connectionEventListView.setAdapter(connectionEventListAdapter);
+    }
+
+    private void initializeScanningList() {
+
+        scanningListview = (ListView) findViewById(R.id.scanning_list_view);
+
+        scanningListAdapter = new ScanItemArrayAdapter(this,
+                android.R.layout.simple_list_item_1, new ArrayList<BluetoothSmartDevice>());
+
+        scanningListview.setAdapter(scanningListAdapter);
+
+        scanningListview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, final View view,
+                                    int position, long id) {
 
                 final BluetoothSmartDevice item = (BluetoothSmartDevice) parent.getItemAtPosition(position);
 
@@ -512,7 +905,13 @@ public class BboxIoTActivity extends Activity {
                 dialog.setTitle("Device " + item.getDeviceUuid());
 
                 Button buttonBack = (Button) dialog.findViewById(R.id.button_back);
-                Button buttonConnect = (Button) dialog.findViewById(R.id.button_connect);
+                Button buttonAssociate = (Button) dialog.findViewById(R.id.button_associate);
+
+                TextView productName = (TextView) dialog.findViewById(R.id.product_name_value);
+                TextView manufacturerName = (TextView) dialog.findViewById(R.id.manufacturer_name_value);
+
+                productName.setText(item.getGenericDevice().getProductName());
+                manufacturerName.setText(item.getGenericDevice().getManufacturerName());
 
                 TextView deviceUidVal = (TextView) dialog.findViewById(R.id.device_uid_value);
                 deviceUidVal.setText(item.getDeviceUuid());
@@ -555,14 +954,39 @@ public class BboxIoTActivity extends Activity {
                     deviceNameList.setText(deviceNames.substring(0, deviceNames.length() - 1));
                 }
 
-                System.out.println("after");
-
                 buttonBack.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         dialog.dismiss();
                     }
                 });
+
+                buttonAssociate.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Log.i(TAG, "associating device " + item.getDeviceUuid());
+
+                        if (bboxIotService != null) {
+                            try {
+
+                                currentDialog = dialog;
+                                currentDeviceUid = item.getDeviceUuid();
+
+                                boolean status = bboxIotService.getBluetoothManager().associateDevice(item.getDeviceUuid());
+
+                                if (status) {
+                                    Log.i(TAG, "Association successfully initiated");
+                                } else
+                                    Log.i(TAG, "Association request failure");
+
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+
                 dialog.show();
             }
 

@@ -16,7 +16,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:paddingLeft="5dp"
         android:textSize="14sp" />
 
     <TextView
@@ -24,7 +23,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:paddingRight="5dp"
         android:textSize="14sp" />
+
+    <ImageView
+        android:id="@+id/connection_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:src="@drawable/green_circle"/>
 
 </LinearLayout>
