@@ -121,10 +121,8 @@ public class BboxIoTActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bboxiot_activity);
 
-        //create intent
-        final Intent intent = new Intent();
-        intent.setComponent(new ComponentName("fr.bouyguestelecom.tv.bboxiot.main",
-                "fr.bouyguestelecom.tv.bboxiot.main.IotService"));
+        Intent intent = new Intent();
+        intent.setComponent(ComponentName.unflattenFromString("fr.bouyguestelecom.tv.bboxiot.main/.IotService"));
 
         btStateOnBtn = (Button) findViewById(R.id.bluetooth_state_on);
         btStateOffBtn = (Button) findViewById(R.id.bluetooth_state_off);
