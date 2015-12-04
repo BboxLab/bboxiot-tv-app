@@ -1,5 +1,7 @@
 # BboxIoT sample app #
 
+[![Build Status](https://travis-ci.org/BboxLab/bboxiot-test-app.svg?branch=master)](https://travis-ci.org/BboxLab/bboxiot-test-app)
+
 Android application using <a href="https://github.com/BboxLab/bbox-iot-library">BboxIot interface library</a>
 
 <hr/>
