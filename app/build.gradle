@@ -10,11 +10,16 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+        testApplicationId "fr.bouyguestelecom.tv.bboxiotsample.test"
+        testInstrumentationRunner "fr.bouyguestelecom.tv.bboxiotsample.test.TestRunner"
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            testCoverageEnabled = true
         }
     }
 }
@@ -27,5 +32,21 @@ repositories {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile(name: 'bboxiot-lib-debug-V0_7-04122015', ext: 'aar')
+    compile 'bboxlab:bboxiot-library:0.7'
 }
+
+// When testing on Travis CI,
+// connectedCheck task doesn't output logs for more than 10 minutes often,
+// which causes build failure.
+// To avoid this, we change the log level for test tasks.
+// Test tasks for buildTypes will be defined on evaluation phase,
+// so do it on afterEvaluate.
+afterEvaluate { project ->
+    tasks.withType(VerificationTask) {
+        logging.level = LogLevel.INFO
+    }
+}
+
+apply plugin: 'com.github.kt3k.coveralls'
+
+coveralls.jacocoReportPath = 'build/reports/coverage/debug/report.xml'

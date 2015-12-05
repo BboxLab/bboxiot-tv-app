@@ -1,0 +1,120 @@
+package fr.bouyguestelecom.tv.bboxiotsample.test;
+
+import android.test.AndroidTestCase;
+import android.view.View;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import fr.bmartel.android.dotti.R;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.config.GenericDevice;
+import fr.bouyguestelecom.tv.bboxiotsample.ScanItemArrayAdapter;
+
+/**
+ * Test case for ScanItemArrayAdapter class
+ *
+ * @author Bertrand Martel
+ */
+public class ScanItemArrayAdapterTest extends AndroidTestCase {
+
+    private ScanItemArrayAdapter mAdapter;
+
+    private BluetoothSmartDevice device1;
+    private BluetoothSmartDevice device2;
+
+    public ScanItemArrayAdapterTest() {
+        super();
+    }
+
+    protected void setUp() throws Exception {
+        super.setUp();
+
+        ArrayList<BluetoothSmartDevice> btDeviceList = new ArrayList<BluetoothSmartDevice>();
+
+        String address = "address";
+        String deviceUid = "deviceUid";
+        List<String> deviceName = new ArrayList<>();
+        deviceName.add("device1");
+        deviceName.add("device2");
+        byte[] manufacturerData = new byte[]{1, 2, 3, 4, 5};
+        long time = 0;
+        String deviceMode = "deviceMode";
+
+        String protocol = "bluetooth";
+        String manufacturerName = "manufacturer1";
+        String productName = "productName1";
+        String smartBuilderClassName = "fr.bouyguestelecom.tv.bboxiot.fake";
+        List<String> smartFunctionsList = new ArrayList<>();
+
+        GenericDevice device = new GenericDevice(protocol, manufacturerName, productName, smartBuilderClassName, smartFunctionsList);
+
+        device1 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, device, deviceMode);
+        device2 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, device, deviceMode);
+
+        btDeviceList.add(device1);
+        btDeviceList.add(device2);
+
+        mAdapter = new ScanItemArrayAdapter(getContext(), android.R.layout.simple_list_item_1, btDeviceList);
+    }
+
+
+    public void testGetItem() {
+
+        for (int i = 0; i < 2; i++) {
+
+            assertEquals("Device address does not match", device1.getDeviceAddress(),
+                    mAdapter.getItem(i).getDeviceAddress());
+            assertEquals("Device uid does not match", device1.getDeviceUuid(),
+                    mAdapter.getItem(i).getDeviceUuid());
+            assertEquals("Device name list size does not match", device1.getDeviceNameList().size(),
+                    mAdapter.getItem(i).getDeviceNameList().size());
+            assertEquals("Device manufacturer data filter size does not match", device1.getManufacturerData().length,
+                    mAdapter.getItem(i).getManufacturerData().length);
+            assertEquals("Device last activity time does not match", device1.getLastActivityTime(),
+                    mAdapter.getItem(i).getLastActivityTime());
+            assertEquals("Device mode does not match", device1.getDeviceMode(),
+                    mAdapter.getItem(i).getDeviceMode());
+
+            assertNotNull("Generic device is null", mAdapter.getItem(i).getGenericDevice());
+
+            assertEquals("Manufacturer name does not match", device1.getGenericDevice().getManufacturerName(),
+                    mAdapter.getItem(i).getGenericDevice().getManufacturerName());
+            assertEquals("ProductName name does not match", device1.getGenericDevice().getProductName(),
+                    mAdapter.getItem(i).getGenericDevice().getProductName());
+        }
+    }
+
+    public void testGetItemId() {
+        assertEquals("Device ID dost not match", 0, mAdapter.getItemId(0));
+    }
+
+    public void testGetCount() {
+        assertEquals("Incorrect device list size", 2, mAdapter.getCount());
+    }
+
+    public void testGetView() {
+        View view = mAdapter.getView(0, null, null);
+
+        TextView deviceUid = (TextView) view
+                .findViewById(R.id.text1);
+
+        TextView manufacturer = (TextView) view
+                .findViewById(R.id.text2);
+
+        TextView productName = (TextView) view
+                .findViewById(R.id.text3);
+
+        assertNotNull("View is null. ", view);
+        assertNotNull("deviceUid TextView is null. ", deviceUid);
+        assertNotNull("manufacturer TextView is null. ", manufacturer);
+        assertNotNull("productName TextView is null. ", productName);
+
+        assertEquals("deviceUid doesn't match.", device1.getDeviceUuid(), deviceUid.getText());
+        assertEquals("manufacturer doesn't match.", device1.getGenericDevice().getManufacturerName(),
+                manufacturer.getText());
+        assertEquals("productName doesn't match.", device1.getGenericDevice().getProductName(),
+                productName.getText());
+    }
+}

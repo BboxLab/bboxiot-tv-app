@@ -53,8 +53,7 @@ public class ScanItemArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
             holder.productName.setText(btDeviceList.get(position).getGenericDevice().getProductName());
 
         } catch (Exception e) {
-
-
+            e.printStackTrace();
         }
         return vi;
     }

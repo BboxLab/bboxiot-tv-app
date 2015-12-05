@@ -1,6 +1,8 @@
 # BboxIoT sample app #
 
 [![Build Status](https://travis-ci.org/BboxLab/bboxiot-test-app.svg?branch=master)](https://travis-ci.org/BboxLab/bboxiot-test-app)
+[![Coverage Status](https://coveralls.io/repos/BboxLab/bboxiot-test-app/badge.svg?branch=master&service=github)](https://coveralls.io/github/BboxLab/bboxiot-test-app?branch=master)
+[![License](http://img.shields.io/:license-mit-blue.svg)](LICENSE.md)
 
 Android application using <a href="https://github.com/BboxLab/bbox-iot-library">BboxIot interface library</a>
 

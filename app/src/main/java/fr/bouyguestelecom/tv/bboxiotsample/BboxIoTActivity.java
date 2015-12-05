@@ -59,10 +59,10 @@ import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionSta
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.EventBuilder;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.IGenericEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.IotEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.enums.EventRegistration;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.enums.EventSubscription;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.enums.ScanningAction;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.AssociationEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.BluetoothStateEvent;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ConnectionEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanItemEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanStatusChangeEvent;
 
@@ -402,12 +402,12 @@ public class BboxIoTActivity extends Activity {
                         });
                     }
 
-                    Set<EventRegistration> registrationSet = new HashSet<>();
-                    registrationSet.add(EventRegistration.REGISTRATION_BLUETOOTH_STATE);
-                    registrationSet.add(EventRegistration.REGISTRATION_SCANNING);
-                    registrationSet.add(EventRegistration.REGISTRATION_CONNECTION);
+                    Set<EventSubscription> registrationSet = new HashSet<>();
+                    registrationSet.add(EventSubscription.BLUETOOTH_STATE);
+                    registrationSet.add(EventSubscription.SCANNING);
+                    registrationSet.add(EventSubscription.CONNECTION);
 
-                    bboxIotService.getBluetoothManager().registerEvents(EventBuilder.buildRegistration(registrationSet).toJsonString(), new IBluetoothEventListener.Stub() {
+                    bboxIotService.getBluetoothManager().subscribe(EventBuilder.buildSubscription(registrationSet).toJsonString(), new IBluetoothEventListener.Stub() {
 
                         public void onEventReceived(int type, int topic, String event) {
 
@@ -499,9 +499,9 @@ public class BboxIoTActivity extends Activity {
                                             }
                                         }
                                     });
-                                } else if (genericEvent instanceof AssociationEvent) {
+                                } else if (genericEvent instanceof ConnectionEvent) {
 
-                                    final AssociationEvent btEvent = (AssociationEvent) genericEvent;
+                                    final ConnectionEvent btEvent = (ConnectionEvent) genericEvent;
 
                                     System.out.println("received association event : " + btEvent.getState().toString());
 
@@ -817,7 +817,7 @@ public class BboxIoTActivity extends Activity {
 
                         if (bboxIotService != null) {
                             try {
-                                int status = bboxIotService.getBluetoothManager().connect(item.getDeviceUuid(), 2, true);
+                                int status = bboxIotService.getBluetoothManager().connect(item.getDeviceUuid());
 
                                 switch (ConnectionStatus.getStatus(status)) {
                                     case CONNECTION_SUCCESS: {
