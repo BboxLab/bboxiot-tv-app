@@ -41,8 +41,7 @@ public class ConnectionItemArrayAdapter extends ArrayAdapter<BtConnection> {
                 holder = new ViewHolder();
 
                 holder.deviceUid = (TextView) vi.findViewById(R.id.text1);
-                holder.manufacturerName = (TextView) vi.findViewById(R.id.text2);
-                holder.productName = (TextView) vi.findViewById(R.id.text3);
+                holder.supportedDevice = (TextView) vi.findViewById(R.id.text2);
                 holder.connectionStatus = (ImageView) vi.findViewById(R.id.connection_state);
 
                 vi.setTag(holder);
@@ -51,8 +50,7 @@ public class ConnectionItemArrayAdapter extends ArrayAdapter<BtConnection> {
             }
 
             holder.deviceUid.setText(btDeviceList.get(position).getDeviceUuid());
-            holder.manufacturerName.setText(btDeviceList.get(position).getBluetoothDevice().getGenericDevice().getManufacturerName());
-            holder.productName.setText(btDeviceList.get(position).getBluetoothDevice().getGenericDevice().getProductName());
+            holder.supportedDevice.setText(btDeviceList.get(position).getBtSmartDevice().getGenericDevice().getSupportedDevice().toString());
 
             if (btDeviceList.get(position).isConnected()) {
                 holder.connectionStatus.setImageResource(R.drawable.green_circle);
@@ -87,8 +85,7 @@ public class ConnectionItemArrayAdapter extends ArrayAdapter<BtConnection> {
 
     public static class ViewHolder {
         public TextView deviceUid;
-        public TextView manufacturerName;
-        public TextView productName;
+        public TextView supportedDevice;
         public ImageView connectionStatus;
     }
 

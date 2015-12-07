@@ -505,7 +505,7 @@ public class BboxIoTActivity extends Activity {
 
                                     System.out.println("received association event : " + btEvent.getState().toString());
 
-                                    if (connectionEventListAdapter != null) {
+                                    if (connectionEventListAdapter != null && btEvent.getConnection() != null) {
 
                                         runOnUiThread(new Runnable() {
                                             @Override
@@ -517,9 +517,9 @@ public class BboxIoTActivity extends Activity {
                                                         connectionEventListAdapter.getDeviceList().remove(i);
                                                     }
                                                 }
+
                                                 connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getConnection().getDeviceUuid(), btEvent.getState().toString()), 0);
                                                 connectionEventListAdapter.notifyDataSetChanged();
-
                                             }
                                         });
                                     }
@@ -597,6 +597,12 @@ public class BboxIoTActivity extends Activity {
                                             }
                                             case CONNECTION_ERROR: {
 
+                                                break;
+                                            }
+                                            case DEVICE_NOT_FOUND: {
+
+                                                refreshAssociationList();
+                                                
                                                 break;
                                             }
                                         }
@@ -713,16 +719,14 @@ public class BboxIoTActivity extends Activity {
                 Button buttonDisconnect = (Button) dialog.findViewById(R.id.button_disconnect);
                 Button buttonDisassociate = (Button) dialog.findViewById(R.id.button_disassociate);
 
-                TextView productName = (TextView) dialog.findViewById(R.id.product_name_value);
-                TextView manufacturerName = (TextView) dialog.findViewById(R.id.manufacturer_name_value);
+                TextView supportedDevice = (TextView) dialog.findViewById(R.id.supported_device_name_name_value);
 
-                productName.setText(item.getBluetoothDevice().getGenericDevice().getProductName());
-                manufacturerName.setText(item.getBluetoothDevice().getGenericDevice().getManufacturerName());
+                supportedDevice.setText(item.getBtSmartDevice().getGenericDevice().getSupportedDevice().toString());
 
                 ImageView connectedValue = (ImageView) dialog.findViewById(R.id.device_connected_value);
 
                 TextView firstConnection = (TextView) dialog.findViewById(R.id.device_is_first_connected_value);
-                firstConnection.setText("" + item.isFirstTimeConnected());
+                firstConnection.setText("" + item.isFirstConnection());
 
                 TextView busy = (TextView) dialog.findViewById(R.id.device_is_busy_value);
                 busy.setText("" + item.isBusy());
@@ -733,13 +737,13 @@ public class BboxIoTActivity extends Activity {
                 TextView deviceNameList = (TextView) dialog.findViewById(R.id.device_name_list_value);
 
                 TextView deviceUp = (TextView) dialog.findViewById(R.id.device_up_value);
-                deviceUp.setText("" + item.getBluetoothDevice().isUp());
+                deviceUp.setText("" + item.getBtSmartDevice().isUp());
 
                 TextView manufacturerDataFilter = (TextView) dialog.findViewById(R.id.manufacturer_data_filter_value);
 
                 String manufacturerDataFilterVals = "[";
-                for (int i = 0; i < item.getBluetoothDevice().getManufacturerData().length; i++) {
-                    manufacturerDataFilterVals += item.getBluetoothDevice().getManufacturerData()[i] + " , ";
+                for (int i = 0; i < item.getBtSmartDevice().getManufacturerData().length; i++) {
+                    manufacturerDataFilterVals += item.getBtSmartDevice().getManufacturerData()[i] + " , ";
                 }
                 if (!manufacturerDataFilterVals.equals("[")) {
                     manufacturerDataFilterVals = manufacturerDataFilterVals.substring(0, manufacturerDataFilterVals.length() - 3) +
@@ -750,19 +754,19 @@ public class BboxIoTActivity extends Activity {
                 }
 
                 TextView lastActivityDate = (TextView) dialog.findViewById(R.id.last_activity_date_value);
-                Date lastDate = new Date(item.getBluetoothDevice().getLastActivityTime());
+                Date lastDate = new Date(item.getBtSmartDevice().getLastActivityTime());
                 DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
                 lastActivityDate.setText(df.format(lastDate).toString());
 
                 TextView deviceMode = (TextView) dialog.findViewById(R.id.device_mode_value);
-                deviceMode.setText(item.getBluetoothDevice().getDeviceMode());
+                deviceMode.setText(item.getBtSmartDevice().getDeviceMode().toString());
 
                 TextView deviceAddress = (TextView) dialog.findViewById(R.id.device_address_value);
-                deviceAddress.setText(item.getBluetoothDevice().getDeviceAddress());
+                deviceAddress.setText(item.getBtSmartDevice().getDeviceAddress());
 
                 String deviceNames = "";
-                for (int i = 0; i < item.getBluetoothDevice().getDeviceNameList().size(); i++) {
-                    deviceNames += "\"" + item.getBluetoothDevice().getDeviceNameList().get(i) + "\"" + ",";
+                for (int i = 0; i < item.getBtSmartDevice().getDeviceNameList().size(); i++) {
+                    deviceNames += "\"" + item.getBtSmartDevice().getDeviceNameList().get(i) + "\"" + ",";
                 }
                 if (!deviceNames.equals("")) {
                     deviceNameList.setText(deviceNames.substring(0, deviceNames.length() - 1));
@@ -905,11 +909,9 @@ public class BboxIoTActivity extends Activity {
                 Button buttonBack = (Button) dialog.findViewById(R.id.button_back);
                 Button buttonAssociate = (Button) dialog.findViewById(R.id.button_associate);
 
-                TextView productName = (TextView) dialog.findViewById(R.id.product_name_value);
-                TextView manufacturerName = (TextView) dialog.findViewById(R.id.manufacturer_name_value);
+                TextView supportedDeviceName = (TextView) dialog.findViewById(R.id.supported_device_name_value);
 
-                productName.setText(item.getGenericDevice().getProductName());
-                manufacturerName.setText(item.getGenericDevice().getManufacturerName());
+                supportedDeviceName.setText(item.getGenericDevice().getSupportedDevice().toString());
 
                 TextView deviceUidVal = (TextView) dialog.findViewById(R.id.device_uid_value);
                 deviceUidVal.setText(item.getDeviceUuid());
@@ -939,7 +941,7 @@ public class BboxIoTActivity extends Activity {
                 lastActivityDate.setText(df.format(lastDate).toString());
 
                 TextView deviceMode = (TextView) dialog.findViewById(R.id.device_mode_value);
-                deviceMode.setText(item.getDeviceMode());
+                deviceMode.setText(item.getDeviceMode().toString());
 
                 TextView deviceAddress = (TextView) dialog.findViewById(R.id.device_address_value);
                 deviceAddress.setText(item.getDeviceAddress());

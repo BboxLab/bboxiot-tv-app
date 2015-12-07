@@ -10,6 +10,9 @@ import java.util.List;
 import fr.bmartel.android.dotti.R;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.config.GenericDevice;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.config.Protocols;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.config.SupportedDevices;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionMode;
 import fr.bouyguestelecom.tv.bboxiotsample.ScanItemArrayAdapter;
 
 /**
@@ -40,18 +43,11 @@ public class ScanItemArrayAdapterTest extends AndroidTestCase {
         deviceName.add("device2");
         byte[] manufacturerData = new byte[]{1, 2, 3, 4, 5};
         long time = 0;
-        String deviceMode = "deviceMode";
 
-        String protocol = "bluetooth";
-        String manufacturerName = "manufacturer1";
-        String productName = "productName1";
-        String smartBuilderClassName = "fr.bouyguestelecom.tv.bboxiot.fake";
-        List<String> smartFunctionsList = new ArrayList<>();
+        GenericDevice device = new GenericDevice(Protocols.UNDEFINED, SupportedDevices.UNDEFINED);
 
-        GenericDevice device = new GenericDevice(protocol, manufacturerName, productName, smartBuilderClassName, smartFunctionsList);
-
-        device1 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, device, deviceMode);
-        device2 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, device, deviceMode);
+        device1 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, device, ConnectionMode.MODE_NONE);
+        device2 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, device, ConnectionMode.MODE_NONE);
 
         btDeviceList.add(device1);
         btDeviceList.add(device2);
@@ -79,10 +75,8 @@ public class ScanItemArrayAdapterTest extends AndroidTestCase {
 
             assertNotNull("Generic device is null", mAdapter.getItem(i).getGenericDevice());
 
-            assertEquals("Manufacturer name does not match", device1.getGenericDevice().getManufacturerName(),
-                    mAdapter.getItem(i).getGenericDevice().getManufacturerName());
-            assertEquals("ProductName name does not match", device1.getGenericDevice().getProductName(),
-                    mAdapter.getItem(i).getGenericDevice().getProductName());
+            assertEquals("Supported device name does not match", device1.getGenericDevice().getSupportedDevice().ordinal(),
+                    mAdapter.getItem(i).getGenericDevice().getSupportedDevice().ordinal());
         }
     }
 
@@ -100,21 +94,15 @@ public class ScanItemArrayAdapterTest extends AndroidTestCase {
         TextView deviceUid = (TextView) view
                 .findViewById(R.id.text1);
 
-        TextView manufacturer = (TextView) view
+        TextView supportedDevice = (TextView) view
                 .findViewById(R.id.text2);
-
-        TextView productName = (TextView) view
-                .findViewById(R.id.text3);
 
         assertNotNull("View is null. ", view);
         assertNotNull("deviceUid TextView is null. ", deviceUid);
-        assertNotNull("manufacturer TextView is null. ", manufacturer);
-        assertNotNull("productName TextView is null. ", productName);
+        assertNotNull("supported device TextView is null. ", supportedDevice);
 
         assertEquals("deviceUid doesn't match.", device1.getDeviceUuid(), deviceUid.getText());
-        assertEquals("manufacturer doesn't match.", device1.getGenericDevice().getManufacturerName(),
-                manufacturer.getText());
-        assertEquals("productName doesn't match.", device1.getGenericDevice().getProductName(),
-                productName.getText());
+        assertEquals("supported device name doesn't match.", device1.getGenericDevice().getSupportedDevice().toString(),
+                supportedDevice.getText());
     }
 }

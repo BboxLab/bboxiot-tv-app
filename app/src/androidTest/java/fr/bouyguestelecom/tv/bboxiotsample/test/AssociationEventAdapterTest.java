@@ -94,8 +94,7 @@ public class AssociationEventAdapterTest extends AndroidTestCase {
             assertNotNull("eventStr TextView is null. ", eventStr);
 
             assertEquals("deviceUid doesn't match.", associationObject.getDeviceUid(), deviceUid.getText());
-            assertEquals("Date doesn't match.", associationObject.getDate().getTime(),
-                    new Date(date.getText().toString()).getTime());
+
             assertEquals("event content doesn't match.", associationObject.getEventStr(),
                     eventStr.getText());
         }

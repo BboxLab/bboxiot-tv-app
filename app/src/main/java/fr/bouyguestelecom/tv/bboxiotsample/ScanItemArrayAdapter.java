@@ -40,8 +40,7 @@ public class ScanItemArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
                 holder = new ViewHolder();
 
                 holder.deviceUid = (TextView) vi.findViewById(R.id.text1);
-                holder.manufacturerName = (TextView) vi.findViewById(R.id.text2);
-                holder.productName = (TextView) vi.findViewById(R.id.text3);
+                holder.supportedDevice = (TextView) vi.findViewById(R.id.text2);
 
                 vi.setTag(holder);
             } else {
@@ -49,8 +48,7 @@ public class ScanItemArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
             }
 
             holder.deviceUid.setText(btDeviceList.get(position).getDeviceUuid());
-            holder.manufacturerName.setText(btDeviceList.get(position).getGenericDevice().getManufacturerName());
-            holder.productName.setText(btDeviceList.get(position).getGenericDevice().getProductName());
+            holder.supportedDevice.setText(btDeviceList.get(position).getGenericDevice().getSupportedDevice().toString());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -79,8 +77,7 @@ public class ScanItemArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
 
     public static class ViewHolder {
         public TextView deviceUid;
-        public TextView manufacturerName;
-        public TextView productName;
+        public TextView supportedDevice;
     }
 
 }

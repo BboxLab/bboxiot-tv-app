@@ -11,7 +11,10 @@ import java.util.List;
 import fr.bmartel.android.dotti.R;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.config.GenericDevice;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.config.Protocols;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.config.SupportedDevices;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtConnection;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionMode;
 import fr.bouyguestelecom.tv.bboxiotsample.ConnectionItemArrayAdapter;
 
 /**
@@ -42,19 +45,11 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
         long time = 0;
         String deviceMode = "deviceMode";
 
-        String protocol = "bluetooth";
-        String manufacturerName1 = "manufacturer1";
-        String productName1 = "productName1";
-        String manufacturerName2 = "manufacturer2";
-        String productName2 = "productName2";
-        String smartBuilderClassName = "fr.bouyguestelecom.tv.bboxiot.fake";
-        List<String> smartFunctionsList = new ArrayList<>();
+        GenericDevice genericDevice1 = new GenericDevice(Protocols.UNDEFINED, SupportedDevices.UNDEFINED);
+        GenericDevice genericDevice2 = new GenericDevice(Protocols.UNDEFINED, SupportedDevices.UNDEFINED);
 
-        GenericDevice genericDevice1 = new GenericDevice(protocol, manufacturerName1, productName1, smartBuilderClassName, smartFunctionsList);
-        GenericDevice genericDevice2 = new GenericDevice(protocol, manufacturerName2, productName2, smartBuilderClassName, smartFunctionsList);
-
-        BluetoothSmartDevice smartDevice1 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice1, deviceMode);
-        BluetoothSmartDevice smartDevice2 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice2, deviceMode);
+        BluetoothSmartDevice smartDevice1 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice1, ConnectionMode.MODE_NONE);
+        BluetoothSmartDevice smartDevice2 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice2, ConnectionMode.MODE_NONE);
 
         connection1 = new BtConnection(smartDevice1.getDeviceUuid(), false, false, false, smartDevice1);
         connection2 = new BtConnection(smartDevice2.getDeviceUuid(), false, false, false, smartDevice2);
@@ -77,26 +72,23 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
             } else {
                 connection = connection2;
             }
-            assertEquals("Connection " + i + " | " + "Device address does not match", connection.getBluetoothDevice().getDeviceAddress(),
-                    mAdapter.getItem(i).getBluetoothDevice().getDeviceAddress());
+            assertEquals("Connection " + i + " | " + "Device address does not match", connection.getBtSmartDevice().getDeviceAddress(),
+                    mAdapter.getItem(i).getBtSmartDevice().getDeviceAddress());
             assertEquals("Connection " + i + " | " + "Device uid does not match", connection.getDeviceUuid(),
                     mAdapter.getItem(i).getDeviceUuid());
-            assertEquals("Connection " + i + " | " + "Device name list size does not match", connection.getBluetoothDevice().getDeviceNameList().size(),
-                    mAdapter.getItem(i).getBluetoothDevice().getDeviceNameList().size());
-            assertEquals("Connection " + i + " | " + "Device manufacturer data filter size does not match", connection.getBluetoothDevice().getManufacturerData().length,
-                    mAdapter.getItem(i).getBluetoothDevice().getManufacturerData().length);
-            assertEquals("Connection " + i + " | " + "Device last activity time does not match", connection.getBluetoothDevice().getLastActivityTime(),
-                    mAdapter.getItem(i).getBluetoothDevice().getLastActivityTime());
-            assertEquals("Connection " + i + " | " + "Device mode does not match", connection.getBluetoothDevice().getDeviceMode(),
-                    mAdapter.getItem(i).getBluetoothDevice().getDeviceMode());
+            assertEquals("Connection " + i + " | " + "Device name list size does not match", connection.getBtSmartDevice().getDeviceNameList().size(),
+                    mAdapter.getItem(i).getBtSmartDevice().getDeviceNameList().size());
+            assertEquals("Connection " + i + " | " + "Device manufacturer data filter size does not match", connection.getBtSmartDevice().getManufacturerData().length,
+                    mAdapter.getItem(i).getBtSmartDevice().getManufacturerData().length);
+            assertEquals("Connection " + i + " | " + "Device last activity time does not match", connection.getBtSmartDevice().getLastActivityTime(),
+                    mAdapter.getItem(i).getBtSmartDevice().getLastActivityTime());
+            assertEquals("Connection " + i + " | " + "Device mode does not match", connection.getBtSmartDevice().getDeviceMode(),
+                    mAdapter.getItem(i).getBtSmartDevice().getDeviceMode());
 
-            assertNotNull("Connection " + i + " | " + "Generic device is null", mAdapter.getItem(i).getBluetoothDevice().getGenericDevice());
+            assertNotNull("Connection " + i + " | " + "Generic device is null", mAdapter.getItem(i).getBtSmartDevice().getGenericDevice());
 
-            assertEquals("Connection " + i + " | " + "Manufacturer name does not match", connection.getBluetoothDevice().getGenericDevice().getManufacturerName(),
-                    mAdapter.getItem(i).getBluetoothDevice().getGenericDevice().getManufacturerName());
-            assertEquals("Connection " + i + " | " + "ProductName name does not match", connection.getBluetoothDevice().getGenericDevice().getProductName(),
-                    mAdapter.getItem(i).getBluetoothDevice().getGenericDevice().getProductName());
-
+            assertEquals("Connection " + i + " | " + "Supported device name does not match", connection.getBtSmartDevice().getGenericDevice().getSupportedDevice().ordinal(),
+                    mAdapter.getItem(i).getBtSmartDevice().getGenericDevice().getSupportedDevice().ordinal());
         }
 
     }
@@ -115,24 +107,18 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
         TextView deviceUid = (TextView) view
                 .findViewById(R.id.text1);
 
-        TextView manufacturer = (TextView) view
+        TextView supportedDevice = (TextView) view
                 .findViewById(R.id.text2);
-
-        TextView productName = (TextView) view
-                .findViewById(R.id.text3);
 
         ImageView connectionStatus = (ImageView) view.findViewById(R.id.connection_state);
 
         assertNotNull("View is null. ", view);
         assertNotNull("deviceUid TextView is null. ", deviceUid);
-        assertNotNull("manufacturer TextView is null. ", manufacturer);
-        assertNotNull("productName TextView is null. ", productName);
+        assertNotNull("supported device TextView is null. ", supportedDevice);
         assertNotNull("connection status ImageView is null. ", connectionStatus);
 
         assertEquals("deviceUid doesn't match.", connection1.getDeviceUuid(), deviceUid.getText());
-        assertEquals("manufacturer doesn't match.", connection1.getBluetoothDevice().getGenericDevice().getManufacturerName(),
-                manufacturer.getText());
-        assertEquals("productName doesn't match.", connection1.getBluetoothDevice().getGenericDevice().getProductName(),
-                productName.getText());
+        assertEquals("supported device name doesn't match.", connection1.getBtSmartDevice().getGenericDevice().getSupportedDevice().toString(),
+                supportedDevice.getText());
     }
 }
