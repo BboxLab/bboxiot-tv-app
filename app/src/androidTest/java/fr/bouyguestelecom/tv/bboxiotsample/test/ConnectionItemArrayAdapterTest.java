@@ -51,8 +51,8 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
         BluetoothSmartDevice smartDevice1 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice1, ConnectionMode.MODE_NONE);
         BluetoothSmartDevice smartDevice2 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice2, ConnectionMode.MODE_NONE);
 
-        connection1 = new BtConnection(smartDevice1.getDeviceUuid(), false, false, false, smartDevice1);
-        connection2 = new BtConnection(smartDevice2.getDeviceUuid(), false, false, false, smartDevice2);
+        connection1 = new BtConnection(smartDevice1.getDeviceUuid(), false, false, false, smartDevice1, new ArrayList<SmartFunction>());
+        connection2 = new BtConnection(smartDevice2.getDeviceUuid(), false, false, false, smartDevice2, new ArrayList<SmartFunction>());
 
         btDeviceList.add(connection1);
         btDeviceList.add(connection2);

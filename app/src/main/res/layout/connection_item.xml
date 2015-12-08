@@ -91,36 +91,6 @@
             android:layout_height="wrap_content">
 
             <TextView
-                android:id="@+id/device_is_first_connected"
-                android:layout_weight="1"
-                android:text="first connection" />
-
-            <TextView
-                android:id="@+id/device_is_first_connected_value"
-                android:layout_weight="1" />
-
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/device_is_busy"
-                android:layout_weight="1"
-                android:text="busy" />
-
-            <TextView
-                android:id="@+id/device_is_busy_value"
-                android:layout_weight="1" />
-
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
                 android:id="@+id/device_name_list"
                 android:layout_weight="1"
                 android:text="device name filter" />
@@ -209,5 +179,11 @@
         </TableRow>
 
     </TableLayout>
+
+    <ListView
+        android:id="@+id/properties_list_view"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:layout_width="match_parent" />
 
 </LinearLayout>

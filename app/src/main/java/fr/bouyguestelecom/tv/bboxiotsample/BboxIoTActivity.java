@@ -29,14 +29,18 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Point;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -47,11 +51,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import fr.bmartel.android.dotti.R;
 import fr.bouyguestelecom.tv.bboxiot.IBboxIotService;
+import fr.bouyguestelecom.tv.bboxiot.datamodel.SmartProperty;
+import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Functions;
+import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Properties;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.IBluetoothEventListener;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtConnection;
@@ -602,7 +610,7 @@ public class BboxIoTActivity extends Activity {
                                             case DEVICE_NOT_FOUND: {
 
                                                 refreshAssociationList();
-                                                
+
                                                 break;
                                             }
                                         }
@@ -642,8 +650,15 @@ public class BboxIoTActivity extends Activity {
 
         Log.i(TAG, "refresh association list");
 
-        associationList = IotEvent.parseAssociationList(bboxIotService.getBluetoothManager().getAssociationList());
+        associationList = IotEvent.parseAssociationList(bboxIotService.getBluetoothManager().getAssociationList()).getList();
 
+        Iterator it = associationList.entrySet().iterator();
+
+        while (it.hasNext()) {
+            Map.Entry<String, BtConnection> pair = (Map.Entry) it.next();
+
+            System.out.println("entry " + pair.getKey() + " : " + pair.getValue().toJson().toString());
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -666,7 +681,7 @@ public class BboxIoTActivity extends Activity {
 
     private void refreshScanningList() throws RemoteException {
 
-        scanningList = IotEvent.parseScanningList(bboxIotService.getBluetoothManager().getScanningList());
+        scanningList = IotEvent.parseScanningList(bboxIotService.getBluetoothManager().getScanningList()).getList();
 
         runOnUiThread(new Runnable() {
             @Override
@@ -686,6 +701,28 @@ public class BboxIoTActivity extends Activity {
                 }
             }
         });
+    }
+
+    public static int getScreenWidth(Activity context) {
+        Display display = context.getWindowManager().getDefaultDisplay();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            Point size = new Point();
+            display.getSize(size);
+            return size.x;
+        }
+        return display.getWidth();
+    }
+
+    public static int getScreenHeight(Activity context) {
+        Display display = context.getWindowManager().getDefaultDisplay();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            Point size = new Point();
+            display.getSize(size);
+            return size.y;
+        }
+        return display.getHeight();
     }
 
     private void initializeAssociationList() {
@@ -712,6 +749,9 @@ public class BboxIoTActivity extends Activity {
                 currentDeviceUid = item.getDeviceUuid();
 
                 dialog.setContentView(R.layout.connection_item);
+
+                dialog.getWindow().setLayout(getScreenWidth(BboxIoTActivity.this) / 2
+                        , LinearLayout.LayoutParams.MATCH_PARENT);
                 dialog.setTitle("Device " + item.getDeviceUuid());
 
                 Button buttonBack = (Button) dialog.findViewById(R.id.button_back);
@@ -721,15 +761,42 @@ public class BboxIoTActivity extends Activity {
 
                 TextView supportedDevice = (TextView) dialog.findViewById(R.id.supported_device_name_name_value);
 
+                ListView propertiesList = (ListView) dialog.findViewById(R.id.properties_list_view);
+
+                List<SmartProperty> propertyList = new ArrayList<SmartProperty>();
+
+                Iterator it = item.getDeviceFunctions().entrySet().iterator();
+
+                while (it.hasNext()) {
+                    Map.Entry<Functions, HashMap<Properties, SmartProperty>> pair = (Map.Entry) it.next();
+
+                    Iterator it2 = pair.getValue().entrySet().iterator();
+
+                    while (it2.hasNext()) {
+
+                        Map.Entry<Functions, SmartProperty> pair2 = (Map.Entry) it2.next();
+
+                        propertyList.add(pair2.getValue());
+                    }
+                }
+
+                PropertyAdapter propertyAdapter = new PropertyAdapter(BboxIoTActivity.this,
+                        android.R.layout.simple_list_item_1, propertyList);
+
+                propertiesList.setAdapter(propertyAdapter);
+
+                propertiesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, final View view,
+                                            int position, long id) {
+
+                    }
+                });
+
                 supportedDevice.setText(item.getBtSmartDevice().getGenericDevice().getSupportedDevice().toString());
 
                 ImageView connectedValue = (ImageView) dialog.findViewById(R.id.device_connected_value);
-
-                TextView firstConnection = (TextView) dialog.findViewById(R.id.device_is_first_connected_value);
-                firstConnection.setText("" + item.isFirstConnection());
-
-                TextView busy = (TextView) dialog.findViewById(R.id.device_is_busy_value);
-                busy.setText("" + item.isBusy());
 
                 TextView deviceUidVal = (TextView) dialog.findViewById(R.id.device_uid_value);
                 deviceUidVal.setText(item.getDeviceUuid());
