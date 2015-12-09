@@ -60,21 +60,21 @@ import fr.bouyguestelecom.tv.bboxiot.IBboxIotService;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.SmartProperty;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Functions;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Properties;
+import fr.bouyguestelecom.tv.bboxiot.events.EventBuilder;
+import fr.bouyguestelecom.tv.bboxiot.events.IGenericEvent;
+import fr.bouyguestelecom.tv.bboxiot.events.IotEvent;
+import fr.bouyguestelecom.tv.bboxiot.events.enums.EventSubscription;
+import fr.bouyguestelecom.tv.bboxiot.events.enums.ScanningAction;
+import fr.bouyguestelecom.tv.bboxiot.events.impl.BluetoothStateEvent;
+import fr.bouyguestelecom.tv.bboxiot.events.impl.ConnectionEvent;
+import fr.bouyguestelecom.tv.bboxiot.events.impl.ScanItemEvent;
+import fr.bouyguestelecom.tv.bboxiot.events.impl.ScanStatusChangeEvent;
+import fr.bouyguestelecom.tv.bboxiot.events.inter.IPropertyIncomingEvent;
+import fr.bouyguestelecom.tv.bboxiot.events.inter.IPropertyResponseEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.IBluetoothEventListener;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtConnection;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionStatus;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.EventBuilder;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.IGenericEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.IotEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.enums.EventSubscription;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.enums.ScanningAction;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.BluetoothStateEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ConnectionEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanItemEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanStatusChangeEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.inter.IPropertyIncomingEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.inter.IPropertyResponseEvent;
 
 /**
  * Dotti device management main activity
