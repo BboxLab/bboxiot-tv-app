@@ -5,11 +5,10 @@ import android.view.View;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Date;
 
-import fr.bmartel.android.dotti.R;
-import fr.bouyguestelecom.tv.bboxiotsample.AssociationEventAdapter;
-import fr.bouyguestelecom.tv.bboxiotsample.AssociationEventObj;
+import fr.bouyguestelecom.tv.bboxiot.tvapp.AssociationEventAdapter;
+import fr.bouyguestelecom.tv.bboxiot.tvapp.AssociationEventObj;
+import fr.bouyguestelecom.tv.bboxiot.tvapp.R;
 
 /**
  * @author Bertrand Martel

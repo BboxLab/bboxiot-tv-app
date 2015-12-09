@@ -178,12 +178,29 @@
 
         </TableRow>
 
+        <TableRow
+            android:id="@+id/properties_on_off_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/switch_state_on"
+                android:layout_weight="1"
+                android:text="ON" />
+
+            <Button
+                android:id="@+id/switch_state_off"
+                android:layout_weight="1"
+                android:text="OFF" />
+
+        </TableRow>
     </TableLayout>
 
     <ListView
         android:id="@+id/properties_list_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:layout_width="match_parent" />
+        android:layout_margin="5dp" />
 
 </LinearLayout>

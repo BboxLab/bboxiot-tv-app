@@ -1,4 +1,4 @@
-package fr.bouyguestelecom.tv.bboxiotsample;
+package fr.bouyguestelecom.tv.bboxiot.tvapp;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -7,27 +7,25 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.bmartel.android.dotti.R;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 
 /**
  * @author Bertrand Martel
  */
-public class AssociationEventAdapter extends ArrayAdapter<AssociationEventObj> {
+public class ScanItemArrayAdapter extends ArrayAdapter<BluetoothSmartDevice> {
 
-    List<AssociationEventObj> events = new ArrayList<>();
+    List<BluetoothSmartDevice> btDeviceList = new ArrayList<>();
 
     private static LayoutInflater inflater = null;
 
-    public AssociationEventAdapter(Context context, int textViewResourceId,
-                                   List<AssociationEventObj> objects) {
+    public ScanItemArrayAdapter(Context context, int textViewResourceId,
+                                List<BluetoothSmartDevice> objects) {
         super(context, textViewResourceId, objects);
 
-        this.events = objects;
+        this.btDeviceList = objects;
 
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
@@ -37,22 +35,19 @@ public class AssociationEventAdapter extends ArrayAdapter<AssociationEventObj> {
         final ViewHolder holder;
         try {
             if (convertView == null) {
-                vi = inflater.inflate(R.layout.connection_event_item, null);
+                vi = inflater.inflate(R.layout.listview_item, null);
                 holder = new ViewHolder();
 
-                holder.date = (TextView) vi.findViewById(R.id.text1);
-                holder.deviceUid = (TextView) vi.findViewById(R.id.text2);
-                holder.eventStr = (TextView) vi.findViewById(R.id.text3);
+                holder.deviceUid = (TextView) vi.findViewById(R.id.text1);
+                holder.supportedDevice = (TextView) vi.findViewById(R.id.text2);
 
                 vi.setTag(holder);
             } else {
                 holder = (ViewHolder) vi.getTag();
             }
 
-            DateFormat df = new SimpleDateFormat("HH:mm:ss");
-            holder.date.setText(df.format(events.get(position).getDate()).toString());
-            holder.deviceUid.setText(events.get(position).getDeviceUid());
-            holder.eventStr.setText(events.get(position).getEventStr());
+            holder.deviceUid.setText(btDeviceList.get(position).getDeviceUuid());
+            holder.supportedDevice.setText(btDeviceList.get(position).getGenericDevice().getSupportedDevice().toString());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -60,8 +55,8 @@ public class AssociationEventAdapter extends ArrayAdapter<AssociationEventObj> {
         return vi;
     }
 
-    public List<AssociationEventObj> getDeviceList() {
-        return events;
+    public List<BluetoothSmartDevice> getDeviceList() {
+        return btDeviceList;
     }
 
     @Override
@@ -71,7 +66,7 @@ public class AssociationEventAdapter extends ArrayAdapter<AssociationEventObj> {
     }
 
     public int getCount() {
-        return events.size();
+        return btDeviceList.size();
     }
 
     @Override
@@ -80,8 +75,8 @@ public class AssociationEventAdapter extends ArrayAdapter<AssociationEventObj> {
     }
 
     public static class ViewHolder {
-        public TextView date;
         public TextView deviceUid;
-        public TextView eventStr;
+        public TextView supportedDevice;
     }
+
 }

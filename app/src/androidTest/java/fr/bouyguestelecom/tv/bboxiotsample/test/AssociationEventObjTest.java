@@ -4,7 +4,7 @@ import android.test.AndroidTestCase;
 
 import java.util.Date;
 
-import fr.bouyguestelecom.tv.bboxiotsample.AssociationEventObj;
+import fr.bouyguestelecom.tv.bboxiot.tvapp.AssociationEventObj;
 
 /**
  * @author Bertrand Martel

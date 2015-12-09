@@ -7,13 +7,13 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.bmartel.android.dotti.R;
 import fr.bouyguestelecom.tv.bboxiot.config.GenericDevice;
 import fr.bouyguestelecom.tv.bboxiot.config.Protocols;
 import fr.bouyguestelecom.tv.bboxiot.config.SupportedDevices;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionMode;
-import fr.bouyguestelecom.tv.bboxiotsample.ScanItemArrayAdapter;
+import fr.bouyguestelecom.tv.bboxiot.tvapp.R;
+import fr.bouyguestelecom.tv.bboxiot.tvapp.ScanItemArrayAdapter;
 
 /**
  * Test case for ScanItemArrayAdapter class

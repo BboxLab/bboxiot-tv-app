@@ -1,4 +1,4 @@
-package fr.bouyguestelecom.tv.bboxiotsample;
+package fr.bouyguestelecom.tv.bboxiot.tvapp;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -10,7 +10,6 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.bmartel.android.dotti.R;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.SmartProperty;
 
 /**

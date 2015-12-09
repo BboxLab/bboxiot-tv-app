@@ -1,4 +1,4 @@
-package fr.bouyguestelecom.tv.bboxiotsample;
+package fr.bouyguestelecom.tv.bboxiot.tvapp;
 
 import java.util.Date;
 

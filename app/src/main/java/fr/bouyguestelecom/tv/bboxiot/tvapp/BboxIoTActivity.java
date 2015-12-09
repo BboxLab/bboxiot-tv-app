@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package fr.bouyguestelecom.tv.bboxiotsample;
+package fr.bouyguestelecom.tv.bboxiot.tvapp;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -42,6 +42,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 import java.text.DateFormat;
@@ -55,7 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import fr.bmartel.android.dotti.R;
 import fr.bouyguestelecom.tv.bboxiot.IBboxIotService;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.SmartProperty;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Functions;
@@ -73,7 +73,8 @@ import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.BluetoothSta
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ConnectionEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanItemEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanStatusChangeEvent;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.inter.IPropertyEvent;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.inter.IPropertyIncomingEvent;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.inter.IPropertyResponseEvent;
 
 /**
  * Dotti device management main activity
@@ -120,6 +121,10 @@ public class BboxIoTActivity extends Activity {
     private Map<String, BluetoothSmartDevice> scanningList = new HashMap<>();
 
     private Map<String, BtConnection> associationList = new HashMap<>();
+
+    private List<SmartProperty> propertyList = new ArrayList<>();
+
+    private PropertyAdapter propertyAdapter = null;
 
     private Dialog currentDialog = null;
     private String currentDeviceUid = "";
@@ -462,8 +467,6 @@ public class BboxIoTActivity extends Activity {
 
                                     ScanStatusChangeEvent btEvent = (ScanStatusChangeEvent) genericEvent;
 
-                                    System.out.println(btEvent.getAction().toString());
-
                                     if (btEvent.getAction() == ScanningAction.SCANNING_ACTION_START) {
 
                                         runOnUiThread(new Runnable() {
@@ -495,10 +498,6 @@ public class BboxIoTActivity extends Activity {
 
                                     final ScanItemEvent btEvent = (ScanItemEvent) genericEvent;
 
-                                    System.out.println(btEvent.getItem().toJson().toString());
-
-                                    System.out.println("updating adapter");
-
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
@@ -510,15 +509,54 @@ public class BboxIoTActivity extends Activity {
                                         }
                                     });
 
-                                } else if (genericEvent instanceof IPropertyEvent) {
+                                } else if (genericEvent instanceof IPropertyResponseEvent) {
+
+                                    Log.i(TAG, "received property response event");
+
+                                    final IPropertyResponseEvent btEvent = (IPropertyResponseEvent) genericEvent;
+
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+
+                                            if (connectionEventListAdapter.getCount() > 10) {
+
+                                                for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                    connectionEventListAdapter.getDeviceList().remove(i);
+                                                }
+                                            }
+
+                                            connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getDeviceUid(), btEvent.getProperty().getFunction() + " " + btEvent.getActionType().toString() + " " + btEvent.getStatus().toString() + " " + btEvent.getProperty().getValue()), 0);
+                                            connectionEventListAdapter.notifyDataSetChanged();
+                                        }
+                                    });
+
+                                    associationList.get(btEvent.getDeviceUid()).getDeviceFunctions().get(btEvent.getProperty().getFunction()).put(btEvent.getProperty().getProperty(), btEvent.getProperty());
+
+                                    for (int i = 0; i < propertyList.size(); i++) {
+
+                                        if (propertyList.get(i).getDeviceUid().equals(btEvent.getDeviceUid()) &&
+                                                propertyList.get(i).getFunction() == btEvent.getProperty().getFunction() &&
+                                                propertyList.get(i).getProperty() == btEvent.getProperty().getProperty()) {
+
+                                            propertyList.set(i, btEvent.getProperty());
+
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    if (propertyAdapter != null) {
+                                                        propertyAdapter.notifyDataSetChanged();
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
+
+                                } else if (genericEvent instanceof IPropertyIncomingEvent) {
 
                                     Log.i(TAG, "received property event");
 
-                                    final IPropertyEvent btEvent = (IPropertyEvent) genericEvent;
-
-                                    System.out.println(btEvent.getProperty().toJson().toString());
-
-                                    System.out.println("updating adapter");
+                                    final IPropertyIncomingEvent btEvent = (IPropertyIncomingEvent) genericEvent;
 
                                     runOnUiThread(new Runnable() {
                                         @Override
@@ -536,11 +574,32 @@ public class BboxIoTActivity extends Activity {
                                         }
                                     });
 
+                                    associationList.get(btEvent.getDeviceUid()).getDeviceFunctions().get(btEvent.getProperty().getFunction()).put(btEvent.getProperty().getProperty(), btEvent.getProperty());
+
+                                    for (int i = 0; i < propertyList.size(); i++) {
+
+                                        if (propertyList.get(i).getDeviceUid().equals(btEvent.getDeviceUid()) &&
+                                                propertyList.get(i).getFunction() == btEvent.getProperty().getFunction() &&
+                                                propertyList.get(i).getProperty() == btEvent.getProperty().getProperty()) {
+
+                                            propertyList.set(i, btEvent.getProperty());
+
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    if (propertyAdapter != null) {
+                                                        propertyAdapter.notifyDataSetChanged();
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
+
                                 } else if (genericEvent instanceof ConnectionEvent) {
 
                                     final ConnectionEvent btEvent = (ConnectionEvent) genericEvent;
 
-                                    System.out.println("received association event : " + btEvent.getState().toString());
+                                    Log.i(TAG, "received association event : " + btEvent.getState().toString());
 
                                     if (connectionEventListAdapter != null && btEvent.getConnection() != null) {
 
@@ -587,7 +646,6 @@ public class BboxIoTActivity extends Activity {
                                                         @Override
                                                         public void run() {
 
-                                                            System.out.println("modif1");
                                                             ImageView view = (ImageView) currentDialog.findViewById(R.id.device_connected_value);
                                                             if (view != null)
                                                                 view.setImageResource(R.drawable.green_circle);
@@ -614,7 +672,6 @@ public class BboxIoTActivity extends Activity {
                                                     runOnUiThread(new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                            System.out.println("modif2");
                                                             ImageView view = (ImageView) currentDialog.findViewById(R.id.device_connected_value);
                                                             if (view != null)
                                                                 view.setImageResource(R.drawable.red_circle);
@@ -683,11 +740,6 @@ public class BboxIoTActivity extends Activity {
 
         Iterator it = associationList.entrySet().iterator();
 
-        while (it.hasNext()) {
-            Map.Entry<String, BtConnection> pair = (Map.Entry) it.next();
-
-            System.out.println("entry " + pair.getKey() + " : " + pair.getValue().toJson().toString());
-        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -771,7 +823,6 @@ public class BboxIoTActivity extends Activity {
 
                 final BtConnection item = (BtConnection) parent.getItemAtPosition(position);
 
-
                 final Dialog dialog = new Dialog(BboxIoTActivity.this);
 
                 currentDialog = dialog;
@@ -792,24 +843,82 @@ public class BboxIoTActivity extends Activity {
 
                 ListView propertiesList = (ListView) dialog.findViewById(R.id.properties_list_view);
 
-                List<SmartProperty> propertyList = new ArrayList<SmartProperty>();
+                TableRow row = (TableRow) dialog.findViewById(R.id.properties_on_off_row);
+
+                propertyList = new ArrayList<SmartProperty>();
 
                 Iterator it = item.getDeviceFunctions().entrySet().iterator();
 
                 while (it.hasNext()) {
+
                     Map.Entry<Functions, HashMap<Properties, SmartProperty>> pair = (Map.Entry) it.next();
 
                     Iterator it2 = pair.getValue().entrySet().iterator();
 
                     while (it2.hasNext()) {
 
-                        Map.Entry<Functions, SmartProperty> pair2 = (Map.Entry) it2.next();
+                        Map.Entry<Properties, SmartProperty> pair2 = (Map.Entry) it2.next();
 
+                        if (pair.getKey() == Functions.SWITCH && pair2.getValue().getProperty() == Properties.ONOFF) {
+                            row.setVisibility(View.VISIBLE);
+                        }
                         propertyList.add(pair2.getValue());
                     }
                 }
 
-                PropertyAdapter propertyAdapter = new PropertyAdapter(BboxIoTActivity.this,
+                if (row.getVisibility() == View.VISIBLE) {
+
+                    Button onButton = (Button) dialog.findViewById(R.id.switch_state_on);
+                    Button offButton = (Button) dialog.findViewById(R.id.switch_state_off);
+
+                    onButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            if (bboxIotService != null) {
+                                try {
+
+                                    String pushRequest = EventBuilder.buildPushRequest(item.getDeviceFunctions().get(Functions.SWITCH).get(Properties.ONOFF), true);
+
+                                    boolean status = bboxIotService.getBluetoothManager().pushValue(pushRequest);
+
+                                    if (!status)
+                                        Log.e(TAG, "push request has failed");
+                                    else
+                                        Log.e(TAG, "push request sent");
+
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    });
+
+                    offButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            if (bboxIotService != null) {
+                                try {
+
+                                    String pushRequest = EventBuilder.buildPushRequest(item.getDeviceFunctions().get(Functions.SWITCH).get(Properties.ONOFF), false);
+
+                                    boolean status = bboxIotService.getBluetoothManager().pushValue(pushRequest);
+
+                                    if (!status)
+                                        Log.e(TAG, "push request has failed");
+                                    else
+                                        Log.e(TAG, "push request sent");
+
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    });
+                }
+
+                propertyAdapter = new PropertyAdapter(BboxIoTActivity.this,
                         android.R.layout.simple_list_item_1, propertyList);
 
                 propertiesList.setAdapter(propertyAdapter);
@@ -820,6 +929,24 @@ public class BboxIoTActivity extends Activity {
                     public void onItemClick(AdapterView<?> parent, final View view,
                                             int position, long id) {
 
+                        final SmartProperty item = (SmartProperty) parent.getItemAtPosition(position);
+
+                        if (bboxIotService != null) {
+                            try {
+
+                                String pullRequest = EventBuilder.buildPullRequest(item);
+
+                                boolean status = bboxIotService.getBluetoothManager().pullValue(pullRequest);
+
+                                if (!status)
+                                    Log.e(TAG, "pull request has failed");
+                                else
+                                    Log.e(TAG, "pull request sent");
+
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 });
 
