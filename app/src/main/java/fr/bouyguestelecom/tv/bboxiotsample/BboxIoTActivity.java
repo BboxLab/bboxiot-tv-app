@@ -73,6 +73,7 @@ import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.BluetoothSta
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ConnectionEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanItemEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.impl.ScanStatusChangeEvent;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.events.inter.IPropertyEvent;
 
 /**
  * Dotti device management main activity
@@ -414,6 +415,7 @@ public class BboxIoTActivity extends Activity {
                     registrationSet.add(EventSubscription.BLUETOOTH_STATE);
                     registrationSet.add(EventSubscription.SCANNING);
                     registrationSet.add(EventSubscription.CONNECTION);
+                    registrationSet.add(EventSubscription.PROPERTIES);
 
                     bboxIotService.getBluetoothManager().subscribe(EventBuilder.buildSubscription(registrationSet).toJsonString(), new IBluetoothEventListener.Stub() {
 
@@ -507,6 +509,33 @@ public class BboxIoTActivity extends Activity {
                                             }
                                         }
                                     });
+
+                                } else if (genericEvent instanceof IPropertyEvent) {
+
+                                    Log.i(TAG, "received property event");
+
+                                    final IPropertyEvent btEvent = (IPropertyEvent) genericEvent;
+
+                                    System.out.println(btEvent.getProperty().toJson().toString());
+
+                                    System.out.println("updating adapter");
+
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+
+                                            if (connectionEventListAdapter.getCount() > 10) {
+
+                                                for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                    connectionEventListAdapter.getDeviceList().remove(i);
+                                                }
+                                            }
+
+                                            connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getDeviceUid(), btEvent.getProperty().getFunction().toString() + " " + btEvent.getProperty().getProperty().toString() + " " + btEvent.getProperty().getValue().toString()), 0);
+                                            connectionEventListAdapter.notifyDataSetChanged();
+                                        }
+                                    });
+
                                 } else if (genericEvent instanceof ConnectionEvent) {
 
                                     final ConnectionEvent btEvent = (ConnectionEvent) genericEvent;

@@ -6,12 +6,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import fr.bmartel.android.dotti.R;
 import fr.bouyguestelecom.tv.bboxiot.config.GenericDevice;
 import fr.bouyguestelecom.tv.bboxiot.config.Protocols;
 import fr.bouyguestelecom.tv.bboxiot.config.SupportedDevices;
+import fr.bouyguestelecom.tv.bboxiot.datamodel.SmartProperty;
+import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Functions;
+import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Properties;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtConnection;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionMode;
@@ -51,8 +55,8 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
         BluetoothSmartDevice smartDevice1 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice1, ConnectionMode.MODE_NONE);
         BluetoothSmartDevice smartDevice2 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice2, ConnectionMode.MODE_NONE);
 
-        connection1 = new BtConnection(smartDevice1.getDeviceUuid(), false, false, false, smartDevice1, new ArrayList<SmartFunction>());
-        connection2 = new BtConnection(smartDevice2.getDeviceUuid(), false, false, false, smartDevice2, new ArrayList<SmartFunction>());
+        connection1 = new BtConnection(smartDevice1.getDeviceUuid(), false, false, false, smartDevice1, new HashMap<Functions, HashMap<Properties, SmartProperty>>());
+        connection2 = new BtConnection(smartDevice2.getDeviceUuid(), false, false, false, smartDevice2, new HashMap<Functions, HashMap<Properties, SmartProperty>>());
 
         btDeviceList.add(connection1);
         btDeviceList.add(connection2);
