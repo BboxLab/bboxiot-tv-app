@@ -37,7 +37,7 @@ repositories {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile(name:'bboxiot-lib-debug', ext:'aar')
+    compile 'bboxlab:bboxiot-library:0.71'
 }
 
 // When testing on Travis CI,
