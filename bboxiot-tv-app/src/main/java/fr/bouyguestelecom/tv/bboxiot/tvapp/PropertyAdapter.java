@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.bouyguestelecom.tv.bboxiot.datamodel.SmartProperty;
+import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Functions;
+import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Properties;
 
 /**
  * @author Bertrand Martel
@@ -49,7 +51,17 @@ public class PropertyAdapter extends ArrayAdapter<SmartProperty> {
 
             holder.function.setText(propertyList.get(position).getFunction().toString());
             holder.property.setText(propertyList.get(position).getProperty().toString());
-            holder.value.setText("" + propertyList.get(position).getValue());
+
+            holder.value.setBackgroundColor(0);
+
+            if (propertyList.get(position).getFunction() == Functions.RGB_LED &&
+                    propertyList.get(position).getProperty() == Properties.COLOR) {
+
+                holder.value.setBackgroundColor((Integer) propertyList.get(position).getValue());
+
+            } else {
+                holder.value.setText("" + propertyList.get(position).getValue());
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

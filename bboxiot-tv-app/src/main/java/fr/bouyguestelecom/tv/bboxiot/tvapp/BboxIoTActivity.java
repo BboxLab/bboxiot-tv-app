@@ -29,6 +29,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
@@ -42,6 +43,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.TableRow;
 import android.widget.TextView;
 
@@ -55,6 +57,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import fr.bouyguestelecom.tv.bboxiot.IBboxIotService;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.SmartProperty;
@@ -129,11 +133,18 @@ public class BboxIoTActivity extends Activity {
     private Dialog currentDialog = null;
     private String currentDeviceUid = "";
 
+    /**
+     * command task scheduler
+     */
+    private ScheduledExecutorService commandScheduler = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bboxiot_activity);
+
+        commandScheduler = Executors.newSingleThreadScheduledExecutor();
 
         Intent intent = new Intent();
         intent.setComponent(ComponentName.unflattenFromString("fr.bouyguestelecom.tv.bboxiot.main/.IotService"));
@@ -424,290 +435,296 @@ public class BboxIoTActivity extends Activity {
 
                     bboxIotService.getBluetoothManager().subscribe(EventBuilder.buildSubscription(registrationSet).toJsonString(), new IBluetoothEventListener.Stub() {
 
-                        public void onEventReceived(int type, int topic, String event) {
+                        public void onEventReceived(final int type, final int topic, final String event) {
 
-                            Log.i(TAG, "event received => type : " + type + " | topic : " + topic + " | event content : " + event);
+                            commandScheduler.execute(new Runnable() {
+                                @Override
+                                public void run() {
 
-                            IGenericEvent genericEvent = IotEvent.parse(event);
 
-                            if (genericEvent != null) {
+                                    Log.i(TAG, "event received => type : " + type + " | topic : " + topic + " | event content : " + event);
 
-                                if (genericEvent instanceof BluetoothStateEvent) {
+                                    IGenericEvent genericEvent = IotEvent.parse(event);
 
-                                    BluetoothStateEvent btEvent = (BluetoothStateEvent) genericEvent;
+                                    if (genericEvent != null) {
 
-                                    if (btEvent.getBluetoothState()) {
+                                        if (genericEvent instanceof BluetoothStateEvent) {
 
-                                        runOnUiThread(new Runnable() {
+                                            BluetoothStateEvent btEvent = (BluetoothStateEvent) genericEvent;
 
-                                            @Override
-                                            public void run() {
+                                            if (btEvent.getBluetoothState()) {
 
-                                                btStateOnBtn.setEnabled(false);
-                                                btStateOffBtn.setEnabled(true);
-                                                btStateOffBtn.requestFocus();
+                                                runOnUiThread(new Runnable() {
+
+                                                    @Override
+                                                    public void run() {
+
+                                                        btStateOnBtn.setEnabled(false);
+                                                        btStateOffBtn.setEnabled(true);
+                                                        btStateOffBtn.requestFocus();
+                                                    }
+                                                });
+
+                                            } else {
+
+                                                runOnUiThread(new Runnable() {
+
+                                                    @Override
+                                                    public void run() {
+
+                                                        btStateOnBtn.setEnabled(true);
+                                                        btStateOffBtn.setEnabled(false);
+                                                        btStateOnBtn.requestFocus();
+                                                    }
+                                                });
+
                                             }
-                                        });
+                                        } else if (genericEvent instanceof ScanStatusChangeEvent) {
 
-                                    } else {
+                                            ScanStatusChangeEvent btEvent = (ScanStatusChangeEvent) genericEvent;
 
-                                        runOnUiThread(new Runnable() {
+                                            if (btEvent.getAction() == ScanningAction.SCANNING_ACTION_START) {
 
-                                            @Override
-                                            public void run() {
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        btScanContinuous.setEnabled(false);
+                                                        btScanPermanent.setEnabled(false);
+                                                        btScanPeriodic.setEnabled(false);
+                                                        btScanStop.setEnabled(true);
+                                                    }
+                                                });
 
-                                                btStateOnBtn.setEnabled(true);
-                                                btStateOffBtn.setEnabled(false);
-                                                btStateOnBtn.requestFocus();
-                                            }
-                                        });
+                                            } else if (btEvent.getAction() == ScanningAction.SCANNING_ACTION_STOP) {
 
-                                    }
-                                } else if (genericEvent instanceof ScanStatusChangeEvent) {
+                                                runOnUiThread(new Runnable() {
 
-                                    ScanStatusChangeEvent btEvent = (ScanStatusChangeEvent) genericEvent;
+                                                    @Override
+                                                    public void run() {
 
-                                    if (btEvent.getAction() == ScanningAction.SCANNING_ACTION_START) {
-
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                btScanContinuous.setEnabled(false);
-                                                btScanPermanent.setEnabled(false);
-                                                btScanPeriodic.setEnabled(false);
-                                                btScanStop.setEnabled(true);
-                                            }
-                                        });
-
-                                    } else if (btEvent.getAction() == ScanningAction.SCANNING_ACTION_STOP) {
-
-                                        runOnUiThread(new Runnable() {
-
-                                            @Override
-                                            public void run() {
-
-                                                btScanContinuous.setEnabled(true);
-                                                btScanPermanent.setEnabled(true);
-                                                btScanPeriodic.setEnabled(true);
-                                                btScanStop.setEnabled(false);
-                                            }
-                                        });
-                                    }
-
-                                } else if (genericEvent instanceof ScanItemEvent) {
-
-                                    final ScanItemEvent btEvent = (ScanItemEvent) genericEvent;
-
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-
-                                            if (scanningListAdapter != null) {
-                                                scanningListAdapter.add(btEvent.getItem());
-                                                scanningListAdapter.notifyDataSetChanged();
-                                            }
-                                        }
-                                    });
-
-                                } else if (genericEvent instanceof IPropertyResponseEvent) {
-
-                                    Log.i(TAG, "received property response event");
-
-                                    final IPropertyResponseEvent btEvent = (IPropertyResponseEvent) genericEvent;
-
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-
-                                            if (connectionEventListAdapter.getCount() > 10) {
-
-                                                for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
-                                                    connectionEventListAdapter.getDeviceList().remove(i);
-                                                }
+                                                        btScanContinuous.setEnabled(true);
+                                                        btScanPermanent.setEnabled(true);
+                                                        btScanPeriodic.setEnabled(true);
+                                                        btScanStop.setEnabled(false);
+                                                    }
+                                                });
                                             }
 
-                                            connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getDeviceUid(), btEvent.getProperty().getFunction() + " " + btEvent.getActionType().toString() + " " + btEvent.getStatus().toString() + " " + btEvent.getProperty().getValue()), 0);
-                                            connectionEventListAdapter.notifyDataSetChanged();
-                                        }
-                                    });
+                                        } else if (genericEvent instanceof ScanItemEvent) {
 
-                                    associationList.get(btEvent.getDeviceUid()).getDeviceFunctions().get(btEvent.getProperty().getFunction()).put(btEvent.getProperty().getProperty(), btEvent.getProperty());
-
-                                    for (int i = 0; i < propertyList.size(); i++) {
-
-                                        if (propertyList.get(i).getDeviceUid().equals(btEvent.getDeviceUid()) &&
-                                                propertyList.get(i).getFunction() == btEvent.getProperty().getFunction() &&
-                                                propertyList.get(i).getProperty() == btEvent.getProperty().getProperty()) {
-
-                                            propertyList.set(i, btEvent.getProperty());
+                                            final ScanItemEvent btEvent = (ScanItemEvent) genericEvent;
 
                                             runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    if (propertyAdapter != null) {
-                                                        propertyAdapter.notifyDataSetChanged();
+
+                                                    if (scanningListAdapter != null) {
+                                                        scanningListAdapter.add(btEvent.getItem());
+                                                        scanningListAdapter.notifyDataSetChanged();
                                                     }
                                                 }
                                             });
-                                        }
-                                    }
 
-                                } else if (genericEvent instanceof IPropertyIncomingEvent) {
+                                        } else if (genericEvent instanceof IPropertyResponseEvent) {
 
-                                    Log.i(TAG, "received property event");
+                                            Log.i(TAG, "received property response event");
 
-                                    final IPropertyIncomingEvent btEvent = (IPropertyIncomingEvent) genericEvent;
-
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-
-                                            if (connectionEventListAdapter.getCount() > 10) {
-
-                                                for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
-                                                    connectionEventListAdapter.getDeviceList().remove(i);
-                                                }
-                                            }
-
-                                            connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getDeviceUid(), btEvent.getProperty().getFunction().toString() + " " + btEvent.getProperty().getProperty().toString() + " " + btEvent.getProperty().getValue().toString()), 0);
-                                            connectionEventListAdapter.notifyDataSetChanged();
-                                        }
-                                    });
-
-                                    associationList.get(btEvent.getDeviceUid()).getDeviceFunctions().get(btEvent.getProperty().getFunction()).put(btEvent.getProperty().getProperty(), btEvent.getProperty());
-
-                                    for (int i = 0; i < propertyList.size(); i++) {
-
-                                        if (propertyList.get(i).getDeviceUid().equals(btEvent.getDeviceUid()) &&
-                                                propertyList.get(i).getFunction() == btEvent.getProperty().getFunction() &&
-                                                propertyList.get(i).getProperty() == btEvent.getProperty().getProperty()) {
-
-                                            propertyList.set(i, btEvent.getProperty());
+                                            final IPropertyResponseEvent btEvent = (IPropertyResponseEvent) genericEvent;
 
                                             runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    if (propertyAdapter != null) {
-                                                        propertyAdapter.notifyDataSetChanged();
+
+                                                    if (connectionEventListAdapter.getCount() > 10) {
+
+                                                        for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                            connectionEventListAdapter.getDeviceList().remove(i);
+                                                        }
                                                     }
+
+                                                    connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getDeviceUid(), btEvent.getProperty().getFunction() + " " + btEvent.getActionType().toString() + " " + btEvent.getStatus().toString() + " " + btEvent.getProperty().getValue()), 0);
+                                                    connectionEventListAdapter.notifyDataSetChanged();
                                                 }
                                             });
-                                        }
-                                    }
 
-                                } else if (genericEvent instanceof ConnectionEvent) {
+                                            associationList.get(btEvent.getDeviceUid()).getDeviceFunctions().get(btEvent.getProperty().getFunction()).put(btEvent.getProperty().getProperty(), btEvent.getProperty());
 
-                                    final ConnectionEvent btEvent = (ConnectionEvent) genericEvent;
+                                            for (int i = 0; i < propertyList.size(); i++) {
 
-                                    Log.i(TAG, "received association event : " + btEvent.getState().toString());
+                                                if (propertyList.get(i).getDeviceUid().equals(btEvent.getDeviceUid()) &&
+                                                        propertyList.get(i).getFunction() == btEvent.getProperty().getFunction() &&
+                                                        propertyList.get(i).getProperty() == btEvent.getProperty().getProperty()) {
 
-                                    if (connectionEventListAdapter != null && btEvent.getConnection() != null) {
+                                                    propertyList.set(i, btEvent.getProperty());
 
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            if (propertyAdapter != null) {
+                                                                propertyAdapter.notifyDataSetChanged();
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            }
 
-                                                if (connectionEventListAdapter.getCount() > 10) {
+                                        } else if (genericEvent instanceof IPropertyIncomingEvent) {
 
-                                                    for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
-                                                        connectionEventListAdapter.getDeviceList().remove(i);
+                                            Log.i(TAG, "received property event");
+
+                                            final IPropertyIncomingEvent btEvent = (IPropertyIncomingEvent) genericEvent;
+
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+
+                                                    if (connectionEventListAdapter.getCount() > 10) {
+
+                                                        for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                            connectionEventListAdapter.getDeviceList().remove(i);
+                                                        }
+                                                    }
+
+                                                    connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getDeviceUid(), btEvent.getProperty().getFunction().toString() + " " + btEvent.getProperty().getProperty().toString() + " " + btEvent.getProperty().getValue().toString()), 0);
+                                                    connectionEventListAdapter.notifyDataSetChanged();
+                                                }
+                                            });
+
+                                            associationList.get(btEvent.getDeviceUid()).getDeviceFunctions().get(btEvent.getProperty().getFunction()).put(btEvent.getProperty().getProperty(), btEvent.getProperty());
+
+                                            for (int i = 0; i < propertyList.size(); i++) {
+
+                                                if (propertyList.get(i).getDeviceUid().equals(btEvent.getDeviceUid()) &&
+                                                        propertyList.get(i).getFunction() == btEvent.getProperty().getFunction() &&
+                                                        propertyList.get(i).getProperty() == btEvent.getProperty().getProperty()) {
+
+                                                    propertyList.set(i, btEvent.getProperty());
+
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            if (propertyAdapter != null) {
+                                                                propertyAdapter.notifyDataSetChanged();
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            }
+
+                                        } else if (genericEvent instanceof ConnectionEvent) {
+
+                                            final ConnectionEvent btEvent = (ConnectionEvent) genericEvent;
+
+                                            Log.i(TAG, "received association event : " + btEvent.getState().toString());
+
+                                            if (connectionEventListAdapter != null && btEvent.getConnection() != null) {
+
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+
+                                                        if (connectionEventListAdapter.getCount() > 10) {
+
+                                                            for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                                connectionEventListAdapter.getDeviceList().remove(i);
+                                                            }
+                                                        }
+
+                                                        connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getConnection().getDeviceUuid(), btEvent.getState().toString()), 0);
+                                                        connectionEventListAdapter.notifyDataSetChanged();
+                                                    }
+                                                });
+                                            }
+
+                                            try {
+                                                switch (btEvent.getState()) {
+
+                                                    case ASSOCIATION_COMPLETE: {
+
+                                                        if (btEvent.getConnection().getDeviceUuid().equals(currentDeviceUid) && currentDialog != null) {
+                                                            currentDialog.dismiss();
+                                                            currentDialog = null;
+                                                        }
+
+                                                        refreshAssociationList();
+                                                        //refresh scanning list because device entry is no longer present
+                                                        refreshScanningList();
+
+                                                        break;
+                                                    }
+                                                    case CONNECTED: {
+
+                                                        refreshAssociationList();
+
+                                                        if (currentDeviceUid.equals(btEvent.getConnection().getDeviceUuid()) && currentDialog != null) {
+
+                                                            runOnUiThread(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+
+                                                                    ImageView view = (ImageView) currentDialog.findViewById(R.id.device_connected_value);
+                                                                    if (view != null)
+                                                                        view.setImageResource(R.drawable.green_circle);
+
+                                                                    TextView buttonConnect = (TextView) currentDialog.findViewById(R.id.button_connect);
+                                                                    if (buttonConnect != null)
+                                                                        buttonConnect.setEnabled(false);
+
+                                                                    TextView buttonDisconnect = (TextView) currentDialog.findViewById(R.id.button_disconnect);
+                                                                    if (buttonDisconnect != null)
+                                                                        buttonDisconnect.setEnabled(true);
+                                                                }
+                                                            });
+
+                                                        }
+                                                        break;
+                                                    }
+                                                    case DISCONNECTED: {
+
+                                                        refreshAssociationList();
+
+                                                        if (currentDeviceUid.equals(btEvent.getConnection().getDeviceUuid()) && currentDialog != null) {
+
+                                                            runOnUiThread(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    ImageView view = (ImageView) currentDialog.findViewById(R.id.device_connected_value);
+                                                                    if (view != null)
+                                                                        view.setImageResource(R.drawable.red_circle);
+
+                                                                    TextView buttonConnect = (TextView) currentDialog.findViewById(R.id.button_connect);
+                                                                    if (buttonConnect != null)
+                                                                        buttonConnect.setEnabled(true);
+
+                                                                    TextView buttonDisconnect = (TextView) currentDialog.findViewById(R.id.button_disconnect);
+                                                                    if (buttonDisconnect != null)
+                                                                        buttonDisconnect.setEnabled(false);
+                                                                }
+                                                            });
+                                                        }
+
+                                                        break;
+                                                    }
+                                                    case CONNECTION_ERROR: {
+
+                                                        break;
+                                                    }
+                                                    case DEVICE_NOT_FOUND: {
+
+                                                        refreshAssociationList();
+
+                                                        break;
                                                     }
                                                 }
-
-                                                connectionEventListAdapter.insert(new AssociationEventObj(btEvent.getConnection().getDeviceUuid(), btEvent.getState().toString()), 0);
-                                                connectionEventListAdapter.notifyDataSetChanged();
-                                            }
-                                        });
-                                    }
-
-                                    try {
-                                        switch (btEvent.getState()) {
-
-                                            case ASSOCIATION_COMPLETE: {
-
-                                                if (btEvent.getConnection().getDeviceUuid().equals(currentDeviceUid) && currentDialog != null) {
-                                                    currentDialog.dismiss();
-                                                    currentDialog = null;
-                                                }
-
-                                                refreshAssociationList();
-                                                //refresh scanning list because device entry is no longer present
-                                                refreshScanningList();
-
-                                                break;
-                                            }
-                                            case CONNECTED: {
-
-                                                refreshAssociationList();
-
-                                                if (currentDeviceUid.equals(btEvent.getConnection().getDeviceUuid()) && currentDialog != null) {
-
-                                                    runOnUiThread(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-
-                                                            ImageView view = (ImageView) currentDialog.findViewById(R.id.device_connected_value);
-                                                            if (view != null)
-                                                                view.setImageResource(R.drawable.green_circle);
-
-                                                            TextView buttonConnect = (TextView) currentDialog.findViewById(R.id.button_connect);
-                                                            if (buttonConnect != null)
-                                                                buttonConnect.setEnabled(false);
-
-                                                            TextView buttonDisconnect = (TextView) currentDialog.findViewById(R.id.button_disconnect);
-                                                            if (buttonDisconnect != null)
-                                                                buttonDisconnect.setEnabled(true);
-                                                        }
-                                                    });
-
-                                                }
-                                                break;
-                                            }
-                                            case DISCONNECTED: {
-
-                                                refreshAssociationList();
-
-                                                if (currentDeviceUid.equals(btEvent.getConnection().getDeviceUuid()) && currentDialog != null) {
-
-                                                    runOnUiThread(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            ImageView view = (ImageView) currentDialog.findViewById(R.id.device_connected_value);
-                                                            if (view != null)
-                                                                view.setImageResource(R.drawable.red_circle);
-
-                                                            TextView buttonConnect = (TextView) currentDialog.findViewById(R.id.button_connect);
-                                                            if (buttonConnect != null)
-                                                                buttonConnect.setEnabled(true);
-
-                                                            TextView buttonDisconnect = (TextView) currentDialog.findViewById(R.id.button_disconnect);
-                                                            if (buttonDisconnect != null)
-                                                                buttonDisconnect.setEnabled(false);
-                                                        }
-                                                    });
-                                                }
-
-                                                break;
-                                            }
-                                            case CONNECTION_ERROR: {
-
-                                                break;
-                                            }
-                                            case DEVICE_NOT_FOUND: {
-
-                                                refreshAssociationList();
-
-                                                break;
+                                            } catch (RemoteException e) {
+                                                e.printStackTrace();
                                             }
                                         }
-                                    } catch (RemoteException e) {
-                                        e.printStackTrace();
+
                                     }
                                 }
-
-                            }
+                            });
                         }
-
                     });
                 } catch (
                         RemoteException e
@@ -843,7 +860,9 @@ public class BboxIoTActivity extends Activity {
 
                 ListView propertiesList = (ListView) dialog.findViewById(R.id.properties_list_view);
 
-                TableRow row = (TableRow) dialog.findViewById(R.id.properties_on_off_row);
+                TableRow switchStateRow = (TableRow) dialog.findViewById(R.id.properties_on_off_row);
+                TableRow colorRow = (TableRow) dialog.findViewById(R.id.properties_color_row);
+                SeekBar intensityBar = (SeekBar) dialog.findViewById(R.id.intensity_seekbar);
 
                 propertyList = new ArrayList<SmartProperty>();
 
@@ -860,13 +879,19 @@ public class BboxIoTActivity extends Activity {
                         Map.Entry<Properties, SmartProperty> pair2 = (Map.Entry) it2.next();
 
                         if (pair.getKey() == Functions.SWITCH && pair2.getValue().getProperty() == Properties.ONOFF) {
-                            row.setVisibility(View.VISIBLE);
+                            switchStateRow.setVisibility(View.VISIBLE);
+                        }
+                        if (pair.getKey() == Functions.RGB_LED && pair2.getValue().getProperty() == Properties.COLOR) {
+                            colorRow.setVisibility(View.VISIBLE);
+                        }
+                        if (pair.getKey() == Functions.RGB_LED && pair2.getValue().getProperty() == Properties.INTENSITY) {
+                            intensityBar.setVisibility(View.VISIBLE);
                         }
                         propertyList.add(pair2.getValue());
                     }
                 }
 
-                if (row.getVisibility() == View.VISIBLE) {
+                if (switchStateRow.getVisibility() == View.VISIBLE) {
 
                     Button onButton = (Button) dialog.findViewById(R.id.switch_state_on);
                     Button offButton = (Button) dialog.findViewById(R.id.switch_state_off);
@@ -917,6 +942,77 @@ public class BboxIoTActivity extends Activity {
                         }
                     });
                 }
+                if (colorRow.getVisibility() == View.VISIBLE) {
+
+                    Button redButton = (Button) dialog.findViewById(R.id.color_red);
+                    Button greenButton = (Button) dialog.findViewById(R.id.color_green);
+                    Button blueButton = (Button) dialog.findViewById(R.id.color_blue);
+                    Button whiteButton = (Button) dialog.findViewById(R.id.color_white);
+
+                    redButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            setColor(item, Color.RED);
+                        }
+                    });
+
+                    greenButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            setColor(item, Color.GREEN);
+                        }
+                    });
+
+                    blueButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            setColor(item, Color.BLUE);
+                        }
+                    });
+
+                    whiteButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            setColor(item, Color.WHITE);
+                        }
+                    });
+                }
+                if (intensityBar.getVisibility() == View.VISIBLE) {
+
+                    intensityBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+                        @Override
+                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+                            if (bboxIotService != null) {
+                                try {
+
+                                    String pushRequest = EventBuilder.buildPushRequest(item.getDeviceFunctions().get(Functions.RGB_LED).get(Properties.INTENSITY), progress);
+
+                                    boolean status = bboxIotService.getBluetoothManager().pushValue(pushRequest);
+
+                                    if (!status)
+                                        Log.e(TAG, "push request has failed");
+                                    else
+                                        Log.e(TAG, "push request sent");
+
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onStartTrackingTouch(SeekBar seekBar) {
+
+                        }
+
+                        @Override
+                        public void onStopTrackingTouch(SeekBar seekBar) {
+
+                        }
+                    });
+                }
 
                 propertyAdapter = new PropertyAdapter(BboxIoTActivity.this,
                         android.R.layout.simple_list_item_1, propertyList);
@@ -934,7 +1030,11 @@ public class BboxIoTActivity extends Activity {
                         if (bboxIotService != null) {
                             try {
 
+                                System.out.println(item.getFunction() + " et " + item.getProperty());
+
                                 String pullRequest = EventBuilder.buildPullRequest(item);
+
+                                System.out.println("request : " + pullRequest);
 
                                 boolean status = bboxIotService.getBluetoothManager().pullValue(pullRequest);
 
@@ -962,38 +1062,11 @@ public class BboxIoTActivity extends Activity {
                 TextView deviceUp = (TextView) dialog.findViewById(R.id.device_up_value);
                 deviceUp.setText("" + item.getBtSmartDevice().isUp());
 
-                TextView manufacturerDataFilter = (TextView) dialog.findViewById(R.id.manufacturer_data_filter_value);
-
-                String manufacturerDataFilterVals = "[";
-                for (int i = 0; i < item.getBtSmartDevice().getManufacturerData().length; i++) {
-                    manufacturerDataFilterVals += item.getBtSmartDevice().getManufacturerData()[i] + " , ";
-                }
-                if (!manufacturerDataFilterVals.equals("[")) {
-                    manufacturerDataFilterVals = manufacturerDataFilterVals.substring(0, manufacturerDataFilterVals.length() - 3) +
-                            " ]";
-                    manufacturerDataFilter.setText(manufacturerDataFilterVals);
-                } else {
-                    manufacturerDataFilter.setText("[ ]");
-                }
-
-                TextView lastActivityDate = (TextView) dialog.findViewById(R.id.last_activity_date_value);
-                Date lastDate = new Date(item.getBtSmartDevice().getLastActivityTime());
-                DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-                lastActivityDate.setText(df.format(lastDate).toString());
-
                 TextView deviceMode = (TextView) dialog.findViewById(R.id.device_mode_value);
                 deviceMode.setText(item.getBtSmartDevice().getDeviceMode().toString());
 
                 TextView deviceAddress = (TextView) dialog.findViewById(R.id.device_address_value);
                 deviceAddress.setText(item.getBtSmartDevice().getDeviceAddress());
-
-                String deviceNames = "";
-                for (int i = 0; i < item.getBtSmartDevice().getDeviceNameList().size(); i++) {
-                    deviceNames += "\"" + item.getBtSmartDevice().getDeviceNameList().get(i) + "\"" + ",";
-                }
-                if (!deviceNames.equals("")) {
-                    deviceNameList.setText(deviceNames.substring(0, deviceNames.length() - 1));
-                }
 
                 if (item.isConnected()) {
                     connectedValue.setImageResource(R.drawable.green_circle);
@@ -1096,6 +1169,27 @@ public class BboxIoTActivity extends Activity {
             }
 
         });
+    }
+
+
+    private void setColor(BtConnection connection, int color) {
+
+        if (bboxIotService != null) {
+            try {
+
+                String pushRequest = EventBuilder.buildPushRequest(connection.getDeviceFunctions().get(Functions.RGB_LED).get(Properties.COLOR), color);
+
+                boolean status = bboxIotService.getBluetoothManager().pushValue(pushRequest);
+
+                if (!status)
+                    Log.e(TAG, "push request has failed");
+                else
+                    Log.e(TAG, "push request sent");
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void initializeConnectionEventList() {
