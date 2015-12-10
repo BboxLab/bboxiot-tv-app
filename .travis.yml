@@ -33,4 +33,4 @@ install:
 
 script:
   - android list target
-  - ./gradlew clean build connectedCheck :app:coveralls
+  - ./gradlew clean build connectedCheck :bboxiot-tv-app:coveralls

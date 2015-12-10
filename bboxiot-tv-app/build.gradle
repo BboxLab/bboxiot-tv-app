@@ -6,13 +6,13 @@ android {
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "fr.bouyguestelecom.tv.bboxiotsample"
+        applicationId "fr.bouyguestelecom.tv.bboxiot.tvapp"
         minSdkVersion 17
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
-        testApplicationId "fr.bouyguestelecom.tv.bboxiotsample.test"
-        testInstrumentationRunner "fr.bouyguestelecom.tv.bboxiotsample.test.TestRunner"
+        testApplicationId "fr.bouyguestelecom.tv.bboxiot.tvapp.test"
+        testInstrumentationRunner "fr.bouyguestelecom.tv.bboxiot.tvapp.test.TestRunner"
     }
     buildTypes {
         release {
