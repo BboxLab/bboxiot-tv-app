@@ -1,4 +1,4 @@
-package fr.bouyguestelecom.tv.bboxiotsample.test;
+package fr.bouyguestelecom.tv.bboxiot.tvapp.test;
 
 import android.test.AndroidTestCase;
 
