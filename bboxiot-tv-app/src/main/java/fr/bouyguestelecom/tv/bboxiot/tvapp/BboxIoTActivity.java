@@ -396,13 +396,11 @@ public class BboxIoTActivity extends Activity {
 
                         btStateOnBtn.setEnabled(false);
                         btStateOffBtn.setEnabled(true);
-                        btStateOffBtn.requestFocus();
 
                     } else {
 
                         btStateOnBtn.setEnabled(true);
                         btStateOffBtn.setEnabled(false);
-                        btStateOnBtn.requestFocus();
 
                     }
 
@@ -461,7 +459,6 @@ public class BboxIoTActivity extends Activity {
 
                                                         btStateOnBtn.setEnabled(false);
                                                         btStateOffBtn.setEnabled(true);
-                                                        btStateOffBtn.requestFocus();
                                                     }
                                                 });
 
@@ -474,7 +471,6 @@ public class BboxIoTActivity extends Activity {
 
                                                         btStateOnBtn.setEnabled(true);
                                                         btStateOffBtn.setEnabled(false);
-                                                        btStateOnBtn.requestFocus();
                                                     }
                                                 });
 
@@ -863,6 +859,7 @@ public class BboxIoTActivity extends Activity {
                 TableRow switchStateRow = (TableRow) dialog.findViewById(R.id.properties_on_off_row);
                 TableRow colorRow = (TableRow) dialog.findViewById(R.id.properties_color_row);
                 SeekBar intensityBar = (SeekBar) dialog.findViewById(R.id.intensity_seekbar);
+                SeekBar freqMeasurementSeekbar = (SeekBar) dialog.findViewById(R.id.frequency_measurement_seekbar);
 
                 propertyList = new ArrayList<SmartProperty>();
 
@@ -886,6 +883,9 @@ public class BboxIoTActivity extends Activity {
                         }
                         if (pair.getKey() == Functions.RGB_LED && pair2.getValue().getProperty() == Properties.INTENSITY) {
                             intensityBar.setVisibility(View.VISIBLE);
+                        }
+                        if (pair.getKey() == Functions.SMART_METER && pair2.getValue().getProperty() == Properties.FREQUENCY_MEASUREMENT) {
+                            freqMeasurementSeekbar.setVisibility(View.VISIBLE);
                         }
                         propertyList.add(pair2.getValue());
                     }
@@ -977,7 +977,47 @@ public class BboxIoTActivity extends Activity {
                         }
                     });
                 }
+
+                if (freqMeasurementSeekbar.getVisibility() == View.VISIBLE) {
+
+                    freqMeasurementSeekbar.setProgress(item.getDeviceFunctions().get(Functions.SMART_METER).get(Properties.FREQUENCY_MEASUREMENT).getIntValue());
+
+                    freqMeasurementSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                        @Override
+                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+                            if (bboxIotService != null) {
+                                try {
+
+                                    String pushRequest = EventBuilder.buildPushRequest(item.getDeviceFunctions().get(Functions.SMART_METER).get(Properties.FREQUENCY_MEASUREMENT), progress);
+
+                                    boolean status = bboxIotService.getBluetoothManager().pushValue(pushRequest);
+
+                                    if (!status)
+                                        Log.e(TAG, "push request has failed");
+                                    else
+                                        Log.e(TAG, "push request sent");
+
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onStartTrackingTouch(SeekBar seekBar) {
+
+                        }
+
+                        @Override
+                        public void onStopTrackingTouch(SeekBar seekBar) {
+
+                        }
+                    });
+                }
                 if (intensityBar.getVisibility() == View.VISIBLE) {
+
+                    intensityBar.setProgress(item.getDeviceFunctions().get(Functions.RGB_LED).get(Properties.INTENSITY).getIntValue());
 
                     intensityBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
@@ -1177,15 +1217,19 @@ public class BboxIoTActivity extends Activity {
         if (bboxIotService != null) {
             try {
 
-                String pushRequest = EventBuilder.buildPushRequest(connection.getDeviceFunctions().get(Functions.RGB_LED).get(Properties.COLOR), color);
+                if (connection.getDeviceFunctions().containsKey(Functions.RGB_LED) && connection.getDeviceFunctions().get(Functions.RGB_LED).containsKey(Properties.COLOR)) {
 
-                boolean status = bboxIotService.getBluetoothManager().pushValue(pushRequest);
+                    String pushRequest = EventBuilder.buildPushRequest(connection.getDeviceFunctions().get(Functions.RGB_LED).get(Properties.COLOR), color);
 
-                if (!status)
-                    Log.e(TAG, "push request has failed");
-                else
-                    Log.e(TAG, "push request sent");
+                    boolean status = bboxIotService.getBluetoothManager().pushValue(pushRequest);
 
+                    if (!status)
+                        Log.e(TAG, "push request has failed");
+                    else
+                        Log.e(TAG, "push request sent");
+                } else {
+                    Log.e(TAG, "error : function RGB_LED or property COLOR not found");
+                }
             } catch (RemoteException e) {
                 e.printStackTrace();
             }

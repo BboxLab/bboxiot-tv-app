@@ -179,7 +179,8 @@
         <TableRow
             android:id="@+id/properties_color_row"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:visibility="gone">
 
             <Button
                 android:id="@+id/color_red"
@@ -217,7 +218,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:max="100"
-        android:progress="50" />
+        android:progress="50"
+        android:visibility="gone" />
+
+    <SeekBar
+        android:id="@+id/frequency_measurement_seekbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="15"
+        android:progress="3"
+        android:visibility="gone" />
 
     <ListView
         android:id="@+id/properties_list_view"

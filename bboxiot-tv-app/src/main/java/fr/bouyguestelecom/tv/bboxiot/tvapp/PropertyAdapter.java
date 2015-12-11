@@ -53,6 +53,7 @@ public class PropertyAdapter extends ArrayAdapter<SmartProperty> {
             holder.property.setText(propertyList.get(position).getProperty().toString());
 
             holder.value.setBackgroundColor(0);
+            holder.value.setText("");
 
             if (propertyList.get(position).getFunction() == Functions.RGB_LED &&
                     propertyList.get(position).getProperty() == Properties.COLOR) {
