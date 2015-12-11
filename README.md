@@ -10,8 +10,14 @@ Android TV application using <a href="https://github.com/BboxLab/bbox-iot-librar
 
 ## Implemented API
 
-* Bluetooth state API
-* Scanning API
+* BLE discovery API
+  * scanning
+* BLE device control API
+  * association
+  * connection
+  * write/read properties
+  * event monitoring
+* BLE state API
 
 ## Global architecture
 
@@ -22,7 +28,7 @@ The project you are watching is a client application (at the top of the graphx) 
 ## Support
 
 * BboxLab developper portal IoT section: https://dev.bouyguestelecom.fr/forum/viewforum.php?f=45
-* BboxLab developper portal Download section : 
+* BboxLab developper portal Download section : https://dev.bouyguestelecom.fr/forum/viewtopic.php?f=36&t=71
 
 ## License
 
