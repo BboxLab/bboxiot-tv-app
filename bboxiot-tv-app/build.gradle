@@ -10,7 +10,7 @@ android {
         minSdkVersion 17
         targetSdkVersion 22
         versionCode 1
-        versionName "0.75"
+        versionName "0.76"
         testApplicationId "fr.bouyguestelecom.tv.bboxiot.tvapp.test"
         testInstrumentationRunner "fr.bouyguestelecom.tv.bboxiot.tvapp.test.TestRunner"
     }
@@ -26,6 +26,13 @@ android {
     lintOptions {
         abortOnError false
     }
+    applicationVariants.all { variant ->
+
+        variant.outputs.each { output ->
+            def file = output.outputFile
+            output.outputFile = new File(file.parent, file.name.replace(".apk", "-" + defaultConfig.versionName + "-" + getDateTime() + ".apk"))
+        }
+    }
 
 }
 
@@ -37,7 +44,7 @@ repositories {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'bboxlab:bboxiot-library:0.75'
+    compile 'bboxlab:bboxiot-library:0.76'
     //compile project(':bboxiot-lib')
 }
 
@@ -54,3 +61,13 @@ afterEvaluate { project ->
 }
 
 coveralls.jacocoReportPath = 'build/reports/coverage/debug/report.xml'
+
+
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+
+def getDateTime() {
+    DateFormat df = new SimpleDateFormat("ddMMYYYY");
+
+    return df.format(new Date());
+}

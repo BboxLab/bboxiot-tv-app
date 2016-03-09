@@ -77,7 +77,7 @@ import fr.bouyguestelecom.tv.bboxiot.events.inter.IPropertyIncomingEvent;
 import fr.bouyguestelecom.tv.bboxiot.events.inter.IPropertyResponseEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.IBluetoothEventListener;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtConnection;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtAssociatedItem;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionStatus;
 
 /**
@@ -124,7 +124,7 @@ public class BboxIoTActivity extends Activity {
 
     private Map<String, BluetoothSmartDevice> scanningList = new HashMap<>();
 
-    private Map<String, BtConnection> associationList = new HashMap<>();
+    private Map<String, BtAssociatedItem> associationList = new HashMap<>();
 
     private List<SmartProperty> propertyList = new ArrayList<>();
 
@@ -433,7 +433,7 @@ public class BboxIoTActivity extends Activity {
 
                     bboxIotService.getBluetoothManager().subscribe(EventBuilder.buildSubscription(registrationSet).toJsonString(), new IBluetoothEventListener.Stub() {
 
-                        public void onEventReceived(final int type, final int topic, final String event) {
+                        public void onEventReceived(final String type, final String topic, final String event) {
 
                             commandScheduler.execute(new Runnable() {
                                 @Override
@@ -764,7 +764,7 @@ public class BboxIoTActivity extends Activity {
                     Iterator it = associationList.entrySet().iterator();
 
                     while (it.hasNext()) {
-                        Map.Entry<String, BtConnection> pair = (Map.Entry) it.next();
+                        Map.Entry<String, BtAssociatedItem> pair = (Map.Entry) it.next();
                         associationListAdapter.add(pair.getValue());
                     }
                     associationListAdapter.notifyDataSetChanged();
@@ -774,6 +774,8 @@ public class BboxIoTActivity extends Activity {
     }
 
     private void refreshScanningList() throws RemoteException {
+
+        Log.i(TAG, "test : " + bboxIotService.getBluetoothManager().getScanningList());
 
         scanningList = IotEvent.parseScanningList(bboxIotService.getBluetoothManager().getScanningList()).getList();
 
@@ -824,7 +826,7 @@ public class BboxIoTActivity extends Activity {
         associationListview = (ListView) findViewById(R.id.connection_list_view);
 
         associationListAdapter = new ConnectionItemArrayAdapter(this,
-                android.R.layout.simple_list_item_1, new ArrayList<BtConnection>());
+                android.R.layout.simple_list_item_1, new ArrayList<BtAssociatedItem>());
 
         associationListview.setAdapter(associationListAdapter);
 
@@ -834,7 +836,9 @@ public class BboxIoTActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
 
-                final BtConnection item = (BtConnection) parent.getItemAtPosition(position);
+                final BtAssociatedItem item = (BtAssociatedItem) parent.getItemAtPosition(position);
+
+                Log.i(TAG,"item selected : " + item.toJson().toString());
 
                 final Dialog dialog = new Dialog(BboxIoTActivity.this);
 
@@ -910,7 +914,7 @@ public class BboxIoTActivity extends Activity {
                                     if (!status)
                                         Log.e(TAG, "push request has failed");
                                     else
-                                        Log.e(TAG, "push request sent");
+                                        Log.i(TAG, "push request sent");
 
                                 } catch (RemoteException e) {
                                     e.printStackTrace();
@@ -933,7 +937,7 @@ public class BboxIoTActivity extends Activity {
                                     if (!status)
                                         Log.e(TAG, "push request has failed");
                                     else
-                                        Log.e(TAG, "push request sent");
+                                        Log.i(TAG, "push request sent");
 
                                 } catch (RemoteException e) {
                                     e.printStackTrace();
@@ -996,7 +1000,7 @@ public class BboxIoTActivity extends Activity {
                                     if (!status)
                                         Log.e(TAG, "push request has failed");
                                     else
-                                        Log.e(TAG, "push request sent");
+                                        Log.i(TAG, "push request sent");
 
                                 } catch (RemoteException e) {
                                     e.printStackTrace();
@@ -1034,7 +1038,7 @@ public class BboxIoTActivity extends Activity {
                                     if (!status)
                                         Log.e(TAG, "push request has failed");
                                     else
-                                        Log.e(TAG, "push request sent");
+                                        Log.i(TAG, "push request sent");
 
                                 } catch (RemoteException e) {
                                     e.printStackTrace();
@@ -1069,19 +1073,14 @@ public class BboxIoTActivity extends Activity {
 
                         if (bboxIotService != null) {
                             try {
-
-                                System.out.println(item.getFunction() + " et " + item.getProperty());
-
                                 String pullRequest = EventBuilder.buildPullRequest(item);
-
-                                System.out.println("request : " + pullRequest);
 
                                 boolean status = bboxIotService.getBluetoothManager().pullValue(pullRequest);
 
                                 if (!status)
                                     Log.e(TAG, "pull request has failed");
                                 else
-                                    Log.e(TAG, "pull request sent");
+                                    Log.i(TAG, "pull request sent");
 
                             } catch (RemoteException e) {
                                 e.printStackTrace();
@@ -1157,9 +1156,9 @@ public class BboxIoTActivity extends Activity {
 
                         if (bboxIotService != null) {
                             try {
-                                int status = bboxIotService.getBluetoothManager().connect(item.getDeviceUuid());
+                                String status = bboxIotService.getBluetoothManager().connect(item.getDeviceUuid());
 
-                                switch (ConnectionStatus.getStatus(status)) {
+                                switch (ConnectionStatus.getConnectionStatusStr(status)) {
                                     case CONNECTION_SUCCESS: {
                                         Log.i(TAG, "Connection initiated");
                                         break;
@@ -1196,7 +1195,7 @@ public class BboxIoTActivity extends Activity {
                                 if (status)
                                     Log.i(TAG, "Disconnection successfully initiated");
                                 else
-                                    Log.i(TAG, "Disconnection request failure");
+                                    Log.e(TAG, "Disconnection request failure");
 
                             } catch (RemoteException e) {
                                 e.printStackTrace();
@@ -1212,7 +1211,7 @@ public class BboxIoTActivity extends Activity {
     }
 
 
-    private void setColor(BtConnection connection, int color) {
+    private void setColor(BtAssociatedItem connection, int color) {
 
         if (bboxIotService != null) {
             try {
@@ -1226,7 +1225,7 @@ public class BboxIoTActivity extends Activity {
                     if (!status)
                         Log.e(TAG, "push request has failed");
                     else
-                        Log.e(TAG, "push request sent");
+                        Log.i(TAG, "push request sent");
                 } else {
                     Log.e(TAG, "error : function RGB_LED or property COLOR not found");
                 }
@@ -1339,7 +1338,7 @@ public class BboxIoTActivity extends Activity {
                                 if (status) {
                                     Log.i(TAG, "Association successfully initiated");
                                 } else
-                                    Log.i(TAG, "Association request failure");
+                                    Log.e(TAG, "Association request failure");
 
                             } catch (RemoteException e) {
                                 e.printStackTrace();
