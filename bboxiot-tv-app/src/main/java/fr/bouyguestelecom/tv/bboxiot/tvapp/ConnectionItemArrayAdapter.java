@@ -11,19 +11,19 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtAssociatedItem;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtAssociatedDevice;
 
 /**
  * @author Bertrand Martel
  */
-public class ConnectionItemArrayAdapter extends ArrayAdapter<BtAssociatedItem> {
+public class ConnectionItemArrayAdapter extends ArrayAdapter<BtAssociatedDevice> {
 
-    List<BtAssociatedItem> btDeviceList = new ArrayList<>();
+    List<BtAssociatedDevice> btDeviceList = new ArrayList<>();
 
     private static LayoutInflater inflater = null;
 
     public ConnectionItemArrayAdapter(Context context, int textViewResourceId,
-                                      List<BtAssociatedItem> objects) {
+                                      List<BtAssociatedDevice> objects) {
         super(context, textViewResourceId, objects);
 
         this.btDeviceList = objects;
@@ -63,7 +63,7 @@ public class ConnectionItemArrayAdapter extends ArrayAdapter<BtAssociatedItem> {
         return vi;
     }
 
-    public List<BtAssociatedItem> getConnectionList() {
+    public List<BtAssociatedDevice> getConnectionList() {
         return btDeviceList;
     }
 

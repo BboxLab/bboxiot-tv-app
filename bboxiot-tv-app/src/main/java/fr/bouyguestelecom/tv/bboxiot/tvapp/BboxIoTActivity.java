@@ -77,7 +77,7 @@ import fr.bouyguestelecom.tv.bboxiot.events.inter.IPropertyIncomingEvent;
 import fr.bouyguestelecom.tv.bboxiot.events.inter.IPropertyResponseEvent;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.IBluetoothEventListener;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtAssociatedItem;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtAssociatedDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionStatus;
 
 /**
@@ -124,7 +124,7 @@ public class BboxIoTActivity extends Activity {
 
     private Map<String, BluetoothSmartDevice> scanningList = new HashMap<>();
 
-    private Map<String, BtAssociatedItem> associationList = new HashMap<>();
+    private Map<String, BtAssociatedDevice> associationList = new HashMap<>();
 
     private List<SmartProperty> propertyList = new ArrayList<>();
 
@@ -764,7 +764,7 @@ public class BboxIoTActivity extends Activity {
                     Iterator it = associationList.entrySet().iterator();
 
                     while (it.hasNext()) {
-                        Map.Entry<String, BtAssociatedItem> pair = (Map.Entry) it.next();
+                        Map.Entry<String, BtAssociatedDevice> pair = (Map.Entry) it.next();
                         associationListAdapter.add(pair.getValue());
                     }
                     associationListAdapter.notifyDataSetChanged();
@@ -826,7 +826,7 @@ public class BboxIoTActivity extends Activity {
         associationListview = (ListView) findViewById(R.id.connection_list_view);
 
         associationListAdapter = new ConnectionItemArrayAdapter(this,
-                android.R.layout.simple_list_item_1, new ArrayList<BtAssociatedItem>());
+                android.R.layout.simple_list_item_1, new ArrayList<BtAssociatedDevice>());
 
         associationListview.setAdapter(associationListAdapter);
 
@@ -836,7 +836,7 @@ public class BboxIoTActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, final View view,
                                     int position, long id) {
 
-                final BtAssociatedItem item = (BtAssociatedItem) parent.getItemAtPosition(position);
+                final BtAssociatedDevice item = (BtAssociatedDevice) parent.getItemAtPosition(position);
 
                 Log.i(TAG,"item selected : " + item.toJson().toString());
 
@@ -1211,7 +1211,7 @@ public class BboxIoTActivity extends Activity {
     }
 
 
-    private void setColor(BtAssociatedItem connection, int color) {
+    private void setColor(BtAssociatedDevice connection, int color) {
 
         if (bboxIotService != null) {
             try {

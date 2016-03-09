@@ -16,7 +16,7 @@ import fr.bouyguestelecom.tv.bboxiot.datamodel.SmartProperty;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Functions;
 import fr.bouyguestelecom.tv.bboxiot.datamodel.enums.Properties;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.BluetoothSmartDevice;
-import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtAssociatedItem;
+import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.BtAssociatedDevice;
 import fr.bouyguestelecom.tv.bboxiot.protocol.bluetooth.connection.ConnectionMode;
 import fr.bouyguestelecom.tv.bboxiot.tvapp.ConnectionItemArrayAdapter;
 import fr.bouyguestelecom.tv.bboxiot.tvapp.R;
@@ -28,8 +28,8 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
 
     private ConnectionItemArrayAdapter mAdapter;
 
-    private BtAssociatedItem connection1;
-    private BtAssociatedItem connection2;
+    private BtAssociatedDevice connection1;
+    private BtAssociatedDevice connection2;
 
     public ConnectionItemArrayAdapterTest() {
         super();
@@ -38,7 +38,7 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
 
-        ArrayList<BtAssociatedItem> btDeviceList = new ArrayList<BtAssociatedItem>();
+        ArrayList<BtAssociatedDevice> btDeviceList = new ArrayList<BtAssociatedDevice>();
 
         String address = "address";
         String deviceUid = "deviceUid";
@@ -55,8 +55,8 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
         BluetoothSmartDevice smartDevice1 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice1, ConnectionMode.MODE_NONE);
         BluetoothSmartDevice smartDevice2 = new BluetoothSmartDevice(address, deviceUid, deviceName, manufacturerData, time, genericDevice2, ConnectionMode.MODE_NONE);
 
-        connection1 = new BtAssociatedItem(smartDevice1.getDeviceUuid(), false, false, false, smartDevice1, new HashMap<Functions, HashMap<Properties, SmartProperty>>());
-        connection2 = new BtAssociatedItem(smartDevice2.getDeviceUuid(), false, false, false, smartDevice2, new HashMap<Functions, HashMap<Properties, SmartProperty>>());
+        connection1 = new BtAssociatedDevice(smartDevice1.getDeviceUuid(), false, false, false, smartDevice1, new HashMap<Functions, HashMap<Properties, SmartProperty>>());
+        connection2 = new BtAssociatedDevice(smartDevice2.getDeviceUuid(), false, false, false, smartDevice2, new HashMap<Functions, HashMap<Properties, SmartProperty>>());
 
         btDeviceList.add(connection1);
         btDeviceList.add(connection2);
@@ -69,7 +69,7 @@ public class ConnectionItemArrayAdapterTest extends AndroidTestCase {
 
         for (int i = 0; i < 2; i++) {
 
-            BtAssociatedItem connection;
+            BtAssociatedDevice connection;
 
             if (i == 0) {
                 connection = connection1;
