@@ -133,6 +133,8 @@ public class BboxIoTActivity extends Activity {
     private Dialog currentDialog = null;
     private String currentDeviceUid = "";
 
+    private final static int EVENT_MAX_SIZE = 7;
+
     /**
      * command task scheduler
      */
@@ -531,9 +533,9 @@ public class BboxIoTActivity extends Activity {
                                                 @Override
                                                 public void run() {
 
-                                                    if (connectionEventListAdapter.getCount() > 10) {
+                                                    if (connectionEventListAdapter.getCount() > EVENT_MAX_SIZE) {
 
-                                                        for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                        for (int i = connectionEventListAdapter.getCount() - 1; i >= EVENT_MAX_SIZE; i--) {
                                                             connectionEventListAdapter.getDeviceList().remove(i);
                                                         }
                                                     }
@@ -574,9 +576,9 @@ public class BboxIoTActivity extends Activity {
                                                 @Override
                                                 public void run() {
 
-                                                    if (connectionEventListAdapter.getCount() > 10) {
+                                                    if (connectionEventListAdapter.getCount() > EVENT_MAX_SIZE) {
 
-                                                        for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                        for (int i = connectionEventListAdapter.getCount() - 1; i >= EVENT_MAX_SIZE; i--) {
                                                             connectionEventListAdapter.getDeviceList().remove(i);
                                                         }
                                                     }
@@ -619,9 +621,9 @@ public class BboxIoTActivity extends Activity {
                                                     @Override
                                                     public void run() {
 
-                                                        if (connectionEventListAdapter.getCount() > 10) {
+                                                        if (connectionEventListAdapter.getCount() > EVENT_MAX_SIZE) {
 
-                                                            for (int i = connectionEventListAdapter.getCount() - 1; i >= 10; i--) {
+                                                            for (int i = connectionEventListAdapter.getCount() - 1; i >= EVENT_MAX_SIZE; i--) {
                                                                 connectionEventListAdapter.getDeviceList().remove(i);
                                                             }
                                                         }
@@ -747,8 +749,6 @@ public class BboxIoTActivity extends Activity {
 
     private void refreshAssociationList() throws RemoteException {
 
-        Log.i(TAG, "refresh association list");
-
         associationList = IotEvent.parseAssociationList(bboxIotService.getBluetoothManager().getAssociationList()).getList();
 
         Iterator it = associationList.entrySet().iterator();
@@ -774,8 +774,6 @@ public class BboxIoTActivity extends Activity {
     }
 
     private void refreshScanningList() throws RemoteException {
-
-        Log.i(TAG, "test : " + bboxIotService.getBluetoothManager().getScanningList());
 
         scanningList = IotEvent.parseScanningList(bboxIotService.getBluetoothManager().getScanningList()).getList();
 
@@ -838,7 +836,7 @@ public class BboxIoTActivity extends Activity {
 
                 final BtAssociatedDevice item = (BtAssociatedDevice) parent.getItemAtPosition(position);
 
-                Log.i(TAG,"item selected : " + item.toJson().toString());
+                Log.i(TAG, "item selected : " + item.toJson().toString());
 
                 final Dialog dialog = new Dialog(BboxIoTActivity.this);
 
