@@ -10,7 +10,7 @@ android {
         minSdkVersion 17
         targetSdkVersion 22
         versionCode 1
-        versionName "0.76"
+        versionName "1.01"
         testApplicationId "fr.bouyguestelecom.tv.bboxiot.tvapp.test"
         testInstrumentationRunner "fr.bouyguestelecom.tv.bboxiot.tvapp.test.TestRunner"
     }
@@ -44,7 +44,7 @@ repositories {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'fr.bouyguestelecom.dev:bboxiot-library:0.76'
+    compile 'fr.bouyguestelecom.dev:bboxiot-library:1.01'
     //compile project(':bboxiot-lib')
 }
 

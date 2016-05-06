@@ -1102,6 +1102,11 @@ public class BboxIoTActivity extends Activity {
                 TextView deviceMode = (TextView) dialog.findViewById(R.id.device_mode_value);
                 deviceMode.setText(item.getBtSmartDevice().getDeviceMode().toString());
 
+                TextView lastActivityDate = (TextView) dialog.findViewById(R.id.last_activity_date_value);
+                Date lastDate = new Date(item.getBtSmartDevice().getLastActivityTime());
+                DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                lastActivityDate.setText(df.format(lastDate).toString());
+
                 TextView deviceAddress = (TextView) dialog.findViewById(R.id.device_address_value);
                 deviceAddress.setText(item.getBtSmartDevice().getDeviceAddress());
 
